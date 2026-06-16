@@ -20,7 +20,7 @@ Funktionen:
 > keinen Rückkanal haben. Es werden nur automatische Posts gesendet.
 
 **Live:** läuft auf Railway.app
-**Repo:** github.com/mor0kar/wm-bot
+**Repo:** github.com/mor0kar/united_wm_bot
 
 ---
 
