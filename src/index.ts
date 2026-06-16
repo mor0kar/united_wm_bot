@@ -13,6 +13,7 @@
  */
 
 import "dotenv/config";
+import { config } from "./config";
 import { postMessage } from "./discord/webhook";
 import { startScheduler } from "./scheduler";
 import { startStatusServer } from "./health";
@@ -20,7 +21,7 @@ import { recordEvent } from "./status";
 import { logger } from "./utils/logger";
 
 async function main(): Promise<void> {
-  logger.info("WM Bot 2026 startet …");
+  logger.info(`WM Bot 2026 startet … (Modus: ${config.mode.toUpperCase()})`);
 
   // Status-Server zuerst, damit der Port (Railway) sofort offen ist.
   startStatusServer();

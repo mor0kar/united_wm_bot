@@ -26,7 +26,12 @@ export const config = {
     // Webhook-URL aus den Channel-Einstellungen (Integrationen > Webhooks).
     // Kein Bot-Token nötig — der Bot postet nur, er hört nicht zu.
     webhookUrl: () => required("DISCORD_WEBHOOK_URL"),
+    // Optionaler Test-Channel-Webhook (nur im Test-Modus genutzt).
+    testWebhookUrl: () => optional("TEST_WEBHOOK_URL"),
   },
+  // "live" (Default) postet in den echten Channel; "test" in den Test-Channel
+  // bzw. macht einen Dry-Run (nur Log), wenn kein TEST_WEBHOOK_URL gesetzt ist.
+  mode: (optional("BOT_MODE") ?? "live").toLowerCase() === "test" ? "test" : "live",
   footballData: {
     apiKey: () => required("FOOTBALL_DATA_API_KEY"),
   },

@@ -92,6 +92,11 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
   `isNightKickoff()` + `NIGHT_KICKOFF_BEFORE_HOUR` in `src/scheduler/nightWindow.ts`.
 - **Digest zeigt Resultate:** beendete Spiele erscheinen im Digest mit Endstand
   (🏁 Beendet), laufende mit 🔴 Läuft, anstehende mit Anstoßzeit.
+- **TESTEN NIE im echten Channel:** Test-Skripte/Posts immer mit `BOT_MODE=test` ausführen.
+  Dann postet der Webhook in `TEST_WEBHOOK_URL` oder macht — falls leer — einen Dry-Run
+  (nur Log). Default `BOT_MODE=live` → echter Channel. Railway läuft live (kein BOT_MODE gesetzt).
+  Hintergrund: am 2026-06-16 landeten manuelle Test-Reminder im echten WM-Channel und sahen
+  aus wie Doppel-Posts.
 - football-data `group` = "GROUP_G": Gruppenbuchstabe via Präfix-Strip extrahieren
   (`replace(/^GROUP[_\s]?/, "")`), NICHT alle Nicht-A-L-Zeichen entfernen (sonst "GG").
 - Zeitzonen: intern UTC, Ausgabe immer MESZ (UTC+2)
