@@ -1,0 +1,150 @@
+# TODOS.md — WM Bot 2026
+
+Kanonisches Aufgaben- und Evidenzboard.
+
+---
+
+## Status-Legende
+
+| Symbol | Bedeutung |
+|---|---|
+| 🔴 | Blockiert |
+| 🟡 | In Arbeit |
+| 🟢 | Erledigt |
+| ⚪ | Offen |
+| ⏸ | Pausiert |
+| ⛔ | Verworfen |
+
+---
+
+## Aktive Tasks
+
+### [001] Projekt-Setup & Abhängigkeiten
+- **Status:** 🟢 Erledigt
+- **Priorität:** Hoch
+- **Agent:** implementer
+- **Beschreibung:** package.json, tsconfig.json, .env.example, .gitignore anlegen. Alle Dependencies installieren.
+- **Akzeptanzkriterium:** `npm install` läuft durch, `npm run build` erzeugt dist/
+- **Prüfmethode:** `npm run build` ausführen
+- **Evidenz:** 2026-06-16 — Konfig vorhanden, kaputtes `{src`-Verzeichnis entfernt, echte `src/`-Struktur angelegt. `npm install` exit 0, `npm run build` exit 0, dist/ erzeugt.
+
+### [002] Discord Ausgabe-Grundgerüst (Webhook)
+- **Status:** 🟢 Erledigt
+- **Priorität:** Hoch
+- **Agent:** discord-specialist
+- **Beschreibung:** **Architektur geändert 2026-06-16: Webhook statt Bot/Gateway** (Push-only, keine Slash Commands nötig). `src/discord/webhook.ts` (WebhookClient, postMessage/postEmbeds), `src/config.ts` (nur DISCORD_WEBHOOK_URL), `src/index.ts` postet "Ich bin bereit 🏆" beim Start.
+- **Akzeptanzkriterium:** Startnachricht erscheint im Channel
+- **Prüfmethode:** `node dist/index.js`, Channel prüfen
+- **Evidenz:** 2026-06-16 — LIVE getestet: "Ich bin bereit 🏆" via Webhook erfolgreich gepostet. Build grün.
+
+### [003] football-data.org API Wrapper
+- **Status:** 🟢 Erledigt
+- **Priorität:** Hoch
+- **Agent:** api-specialist
+- **Beschreibung:** `src/api/footballData.ts` — Wrapper für alle benötigten Endpoints. Interfaces für Match, Team, Score. Methoden: `getMatchesToday()`, `getMatchesByDate(date)`, `getMatchById(id)`, `getStandings(group?)`.
+- **Akzeptanzkriterium:** Gibt typisierte Match-Objekte zurück, handled Rate Limits
+- **Prüfmethode:** Kleines Test-Script, API Response loggen
+- **Evidenz:** 2026-06-16 — LIVE getestet mit echtem Key: 3 Spiele für heute korrekt geliefert (Iran-NZ FINISHED, France-Senegal TIMED, Iraq-Norway TIMED), Teams/Flaggen/MESZ-Zeiten korrekt. Cache 60s-TTL, 429-Handling. ⚠️ **Erkenntnis:** Free Tier liefert KEIN `venue` → Stadion/Stadt über [004].
+
+### [004] worldcup26.ir Wrapper (Fallback)
+- **Status:** 🟢 Erledigt
+- **Priorität:** Mittel
+- **Agent:** api-specialist
+- **Beschreibung:** `src/api/worldcup26.ts` — Wrapper für Stadion-Details. Da football-data kein `venue` liefert, mappen wir Team-Paar → game.stadium_id → Stadion (name + city). 6h-Cache, robuster Team-Name-Match (Diakritika/Aliase), `null` bei Fehlschlag (blockiert nie einen Post).
+- **Akzeptanzkriterium:** Stadion-Name und Stadt für alle 16 Venues abrufbar
+- **Prüfmethode:** `getVenue(home, away)` gegen echte Spiele
+- **Evidenz:** 2026-06-16 — LIVE: alle 3 heutigen Spiele aufgelöst (Iran-NZ→SoFi Stadium LA, France-Senegal→MetLife NY/NJ, Iraq-Norway→Gillette Boston). Bug gefixt: K.o.-Spiele ohne Team-Namen crashten den Index-Aufbau → jetzt übersprungen.
+
+### [005] Embeds definieren
+- **Status:** 🟢 Erledigt
+- **Priorität:** Mittel
+- **Agent:** discord-specialist
+- **Beschreibung:** Embed-Templates in `src/embeds/` (shared.ts + digest/reminder/result/match/sportschau). Farben: `#C0392B` (Rot) + `#FFD700` (Gold). Teams mit Flaggen, Anstoßzeit MESZ, Stadion + Stadt, Gruppe/Stage. WebhookClient batcht max. 10 Embeds/Nachricht.
+- **Akzeptanzkriterium:** Embeds sehen gut aus und zeigen alle nötigen Infos
+- **Prüfmethode:** Test-Post in Discord-Channel
+- **Evidenz:** 2026-06-16 — LIVE getestet: Digest (alle Tagesspiele + Stadien), Reminder (France-Senegal) und Result (Iran-NZ) erfolgreich in den Channel gepostet.
+
+### [006] Cron Scheduler — Daily Digest
+- **Status:** 🟢 Erledigt
+- **Priorität:** Hoch
+- **Agent:** scheduler-specialist
+- **Beschreibung:** `src/scheduler/dailyDigest.ts` — Täglich um **10:00 MESZ** (von 08:00 verschoben auf Wunsch) alle Spiele des Tages als Embed posten. Wenn kein Spiel: "Heute spielfrei".
+- **Akzeptanzkriterium:** Post erscheint täglich um 10:00 MESZ im konfigurierten Channel
+- **Prüfmethode:** `postDailyDigest()` direkt + Cron-Registrierung prüfen
+- **Evidenz:** 2026-06-16 — Digest-Post live verifiziert (siehe [005]). Cron `0 10 * * *` mit timezone Europe/Berlin registriert sich sauber beim Start.
+
+### [007] Cron Scheduler — Match Reminder (30min)
+- **Status:** 🟢 Erledigt
+- **Priorität:** Hoch
+- **Agent:** scheduler-specialist
+- **Beschreibung:** `src/scheduler/matchReminder.ts` — jede Minute prüfen, Reminder ~30 Min vor Anpfiff. Polling statt setTimeout → übersteht Restarts. Enges Zeitfenster (T-30 bis T-28). Heutige + morgige Spiele. **Nacht-Sperre:** Anpfiff vor 12:00 MESZ (= Nacht-/Frühmorgen-Spiele ab Mitternacht) bekommt KEINEN Reminder — nur Abendspiele vor Mitternacht.
+- **Akzeptanzkriterium:** Reminder kommt ~30min vor Anpfiff, aber nicht für Nacht-Spiele
+- **Prüfmethode:** Reines Prädikat `isReminderDue` mit gefakter `now`
+- **Evidenz:** 2026-06-16 — `isReminderDue` verifiziert: 21:00-Spiel feuert bei T-30; 00:00- und 03:00-Spiele feuern NIE (Nacht-Sperre); FINISHED nie. Cron registriert.
+
+### [008] Cron Scheduler — Ergebnis-Post
+- **Status:** 🟢 Erledigt
+- **Priorität:** Hoch
+- **Agent:** scheduler-specialist
+- **Beschreibung:** `src/scheduler/matchResult.ts` — alle 3 Min gestrige+heutige Spiele abrufen, neue FINISHED-Spiele posten. Altersgrenze 240min (Restart-Schutz). **Nacht-Sperre:** Spiele mit Anpfiff vor 12:00 MESZ posten KEIN Echtzeit-Ergebnis — die erscheinen im Morgen-Digest mit Endstand.
+- **Akzeptanzkriterium:** Ergebnis-Embed kurz nach Spielende; Nacht-Ergebnisse nur im Digest
+- **Prüfmethode:** Reine Prädikate + Digest-Vorschau
+- **Evidenz:** 2026-06-16 — `isResultDue`: 03:00-Nacht-Spiel (FINISHED) postet KEIN Echtzeit-Ergebnis; Abendspiele bei KO+120min ja, KO+300min nein. Digest zeigt Iran-NZ als "🏁 Beendet 2–2" live verifiziert. Nebenbei Bug gefixt: Gruppen-Label "GG"→"G".
+
+### [009] Sportschau Scraper + Embed
+- **Status:** ⚪ Offen
+- **Priorität:** Mittel
+- **Agent:** api-specialist + discord-specialist
+- **Beschreibung:** `src/api/sportschauScraper.ts` — Pollt sportschau.de/fussball/fifa-wm-2026/ alle 10min nach Spielende auf neue Highlight-Videos. Postet `src/embeds/sportschauEmbed.ts` mit Thumbnail + Link wenn gefunden.
+- **Akzeptanzkriterium:** Sportschau-Embed erscheint innerhalb 15min nachdem Zusammenfassung online ist
+- **Prüfmethode:** Manuell URL prüfen und Embed testen
+- **Evidenz:** —
+
+### [010] Slash Commands — ⛔ VERWORFEN
+- **Status:** ⛔ Verworfen (2026-06-16)
+- **Grund:** Architektur auf **Webhook** umgestellt. Webhooks haben keinen Rückkanal,
+  können also keine interaktiven Commands beantworten. Nur automatische Posts.
+- **Hinweis:** Falls die Infos von `/wm-heute` / `/wm-gruppe` / `/wm-tabelle` doch on-demand
+  gewünscht sind, ginge das später als separater Bot (Gateway) oder Interactions-Endpoint.
+
+### [011] Railway Deployment
+- **Status:** 🟡 In Arbeit
+- **Priorität:** Hoch
+- **Agent:** implementer
+- **Beschreibung:** Railway Projekt einrichten, Env Vars setzen, Deploy testen. Bot soll dauerhaft laufen.
+- **Akzeptanzkriterium:** Bot läuft 24/7 auf Railway, erscheint online im Discord
+- **Prüfmethode:** Railway Logs prüfen, Bot-Status in Discord checken
+- **Evidenz:** 2026-06-16 — Deploy-Vorbereitung fertig: `src/health.ts` (Healthcheck auf `PORT`, `/health` liefert 200 lokal verifiziert), `railway.json` (Nixpacks, Healthcheck, Restart-Policy), `.nvmrc` (Node 20), `DEPLOY.md` (Schritt-für-Schritt + Env-Checkliste). Build grün. **Offen (braucht User):** git-Repo + GitHub-Push ODER Railway CLI, Env-Vars im Dashboard setzen, Deploy klicken.
+
+---
+
+## Backlog
+
+- [ ] `/wm-scorer` — Torschützenliste
+- [ ] Gruppen-Standings täglich automatisch updaten (pinned message editieren statt neu posten)
+- [ ] `@here` Mentions für Deutschland-Spiele
+- [ ] WM-Finale: Extra-Embed mit Countdown
+- [ ] Halbzeit-Score posten (falls API das hergibt)
+
+---
+
+## Erledigt
+
+<!-- Abgeschlossene Tasks mit Datum und kurzer Evidenz -->
+
+---
+
+## Bekannte Risiken
+
+- football-data.org Free Tier: 10 Req/min — bei vielen gleichzeitigen Spielen könnte das knapp werden (Lösung: Caching)
+- worldcup26.ir ist ein Community-Projekt — Reliability unklar, daher nur als Fallback
+- Sportschau hat kein offizielles API — Scraper könnte brechen wenn sich HTML ändert
+- Node-cron verliert Jobs bei Neustart — nach Railway Redeploy alle Jobs neu planen
+
+---
+
+## Offene Fragen
+
+- ~~Welcher Discord Channel?~~ → erledigt: Webhook-URL bestimmt den Channel (`DISCORD_WEBHOOK_URL`)
+- Soll bei Deutschland-Spielen extra gepingt werden? (Webhook kann `@here`/Rollen-Mention im content posten)
+- Soll der Sportschau-Scraper auch ARD Mediathek checken?
