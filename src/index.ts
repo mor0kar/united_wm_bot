@@ -3,7 +3,7 @@
  *
  * Architektur: Webhook-basiert (Push-only). Der Prozess hält sich durch die
  * node-cron Scheduler am Leben und postet automatisch:
- *   - Morgen-Digest (10:00 MESZ)
+ *   - Morgen-Digest (08:30 MESZ)
  *   - 30-Min-Reminder vor Anpfiff (nicht für Nacht-Spiele)
  *   - Ergebnis nach Spielende (Nacht-Ergebnisse landen im Morgen-Digest)
  *   - Sportschau-Zusammenfassung

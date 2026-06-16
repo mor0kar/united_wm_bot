@@ -53,7 +53,7 @@ wm-bot/
 │   │   └── webhook.ts           # Webhook-Ausgabe (postMessage / postEmbeds)
 │   ├── scheduler/
 │   │   ├── index.ts             # Alle Cron Jobs registrieren
-│   │   ├── dailyDigest.ts       # 10:00 MESZ — Tages-Spielplan
+│   │   ├── dailyDigest.ts       # 08:30 MESZ — Tages-Spielplan
 │   │   ├── matchReminder.ts     # 30min vor Anpfiff — Reminder
 │   │   ├── matchResult.ts       # Nach Spielende — Ergebnis posten
 │   │   └── sportschau.ts        # Polling für Sportschau-Zusammenfassungen
@@ -169,7 +169,7 @@ LOG_LEVEL=               # optional: debug | info | warn | error (Default: info)
 - [x] Discord-Webhook-Ausgabe (live verifiziert)
 - [x] Embeds (Digest, Reminder, Ergebnis, Sportschau)
 - [x] worldcup26.ir wrapper (Stadion/Stadt, da football-data kein venue liefert)
-- [x] Cron-Scheduler für Digest (10:00) + Reminder (T-30) + Ergebnis
+- [x] Cron-Scheduler für Digest (08:30) + Reminder (T-30) + Ergebnis
 - [ ] Sportschau-Scraper
 - [ ] Railway Deployment
 

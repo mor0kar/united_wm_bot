@@ -15,7 +15,7 @@ Baue und pflege alle zeitgesteuerten Jobs: Daily Digest, Match Reminder, Result 
 ## Verantwortung
 
 - `src/scheduler/index.ts` — Alle Jobs registrieren
-- `src/scheduler/dailyDigest.ts` — 10:00 MESZ Tages-Spielplan
+- `src/scheduler/dailyDigest.ts` — 08:30 MESZ Tages-Spielplan
 - `src/scheduler/matchReminder.ts` — 30min-Vorwarnung
 - `src/scheduler/matchResult.ts` — Ergebnis nach Spielende
 - `src/scheduler/sportschau.ts` — Sportschau Polling
@@ -25,8 +25,8 @@ Baue und pflege alle zeitgesteuerten Jobs: Daily Digest, Match Reminder, Result 
 ```typescript
 import cron from 'node-cron';
 
-// Täglich 10:00 MESZ — direkt mit timezone, kein manuelles UTC-Rechnen nötig
-cron.schedule('0 10 * * *', async () => {
+// Täglich 08:30 MESZ — direkt mit timezone, kein manuelles UTC-Rechnen nötig
+cron.schedule('30 8 * * *', async () => {
   await postDailyDigest();
 }, { timezone: 'Europe/Berlin' });
 ```

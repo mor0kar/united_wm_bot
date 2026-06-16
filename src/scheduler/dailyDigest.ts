@@ -1,5 +1,5 @@
 /**
- * Morgen-Digest: täglich um 10:00 MESZ alle Spiele des Tages posten.
+ * Morgen-Digest: täglich um 08:30 MESZ alle Spiele des Tages posten.
  * Wenn kein Spiel ansteht, postet das Digest-Embed "Heute spielfrei".
  */
 
@@ -13,8 +13,8 @@ import { TIMEZONE } from "../utils/time";
 import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
-// 10:00 MESZ (auf Wunsch von 08:00 verschoben, damit es nicht zu früh kommt).
-const DIGEST_CRON = "0 10 * * *";
+// 08:30 MESZ (früh genug für den Morgen, spät genug um nicht zu nerven).
+const DIGEST_CRON = "30 8 * * *";
 
 /** Holt die heutigen Spiele, reichert Stadien an und postet die Tagesübersicht. */
 export async function postDailyDigest(): Promise<void> {

@@ -4,7 +4,7 @@
  * Spiele mit Anpfiff vor dieser MESZ-Stunde (also Nacht-/Frühmorgen-Spiele
  * ab Mitternacht, z.B. 00:00 / 03:00 MESZ) sollen NICHTS in Echtzeit posten —
  * weder einen 30-Min-Reminder noch einen Ergebnis-Post. Ihre Resultate
- * erscheinen stattdessen im Morgen-Digest (10:00 MESZ).
+ * erscheinen stattdessen im Morgen-Digest (08:30 MESZ).
  *
  * Die Grenze liegt im spiellosen Tagfenster (~06:00–18:00 MESZ), damit sie
  * alle Nacht-Spiele erfasst und keine Abendspiele.

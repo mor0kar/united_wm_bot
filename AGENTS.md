@@ -89,7 +89,7 @@ Verantwortlich für:
 Verantwortlich für:
 - node-cron Job Setup
 - Match Reminder Logik (30min vor Anpfiff)
-- Daily Digest (10:00 MESZ)
+- Daily Digest (08:30 MESZ)
 - Result Posting nach Spielende
 - Sportschau Polling
 

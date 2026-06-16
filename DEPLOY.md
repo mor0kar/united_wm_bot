@@ -71,7 +71,7 @@ Vorteil: Railway baut bei jedem `git push` automatisch neu.
 - **Railway Logs:** „Health-Server lauscht auf Port …", „Alle Scheduler registriert ✅"
 - **Discord:** Startnachricht „Ich bin bereit 🏆" im Channel
 - **Healthcheck:** Railway zeigt den Service als „Active/Healthy"
-- Der nächste **Daily Digest** kommt um **10:00 MESZ**.
+- Der nächste **Daily Digest** kommt um **08:30 MESZ**.
 
 ---
 

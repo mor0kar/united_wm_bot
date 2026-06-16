@@ -68,10 +68,10 @@ Kanonisches Aufgaben- und Evidenzboard.
 - **Status:** 🟢 Erledigt
 - **Priorität:** Hoch
 - **Agent:** scheduler-specialist
-- **Beschreibung:** `src/scheduler/dailyDigest.ts` — Täglich um **10:00 MESZ** (von 08:00 verschoben auf Wunsch) alle Spiele des Tages als Embed posten. Wenn kein Spiel: "Heute spielfrei".
-- **Akzeptanzkriterium:** Post erscheint täglich um 10:00 MESZ im konfigurierten Channel
+- **Beschreibung:** `src/scheduler/dailyDigest.ts` — Täglich um **08:30 MESZ** alle Spiele des Tages als Embed posten. Wenn kein Spiel: "Heute spielfrei".
+- **Akzeptanzkriterium:** Post erscheint täglich um 08:30 MESZ im konfigurierten Channel
 - **Prüfmethode:** `postDailyDigest()` direkt + Cron-Registrierung prüfen
-- **Evidenz:** 2026-06-16 — Digest-Post live verifiziert (siehe [005]). Cron `0 10 * * *` mit timezone Europe/Berlin registriert sich sauber beim Start.
+- **Evidenz:** 2026-06-16 — Digest-Post live verifiziert (siehe [005]). Cron `30 8 * * *` mit timezone Europe/Berlin registriert sich sauber beim Start. (Zeit: zunächst 08:00 → 10:00 → final 08:30 auf Wunsch.)
 
 ### [007] Cron Scheduler — Match Reminder (30min)
 - **Status:** 🟢 Erledigt
