@@ -21,6 +21,7 @@ import { postEmbeds } from "../discord/webhook";
 import { buildReminderEmbed } from "../embeds/reminderEmbed";
 import { parseUtc, TIMEZONE } from "../utils/time";
 import { isNightKickoff } from "./nightWindow";
+import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
 export const REMINDER_LEAD_MIN = 30;
@@ -65,6 +66,10 @@ export async function checkReminders(): Promise<void> {
       reminded.add(match.id);
       const venue = await getVenue(match.homeTeam.name, match.awayTeam.name);
       await postEmbeds([buildReminderEmbed(match, venue)]);
+      recordEvent(
+        "reminder",
+        `${match.homeTeam.name} vs ${match.awayTeam.name}`,
+      );
       logger.info(
         `Reminder gepostet: ${match.homeTeam.name} vs ${match.awayTeam.name}`,
       );

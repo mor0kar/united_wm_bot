@@ -10,6 +10,7 @@ import { postEmbeds } from "../discord/webhook";
 import { buildDigestEmbed } from "../embeds/digestEmbed";
 import type { MatchWithVenue } from "../embeds/shared";
 import { TIMEZONE } from "../utils/time";
+import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
 // 10:00 MESZ (auf Wunsch von 08:00 verschoben, damit es nicht zu früh kommt).
@@ -25,6 +26,7 @@ export async function postDailyDigest(): Promise<void> {
       entries.push({ match, venue });
     }
     await postEmbeds([buildDigestEmbed(entries)]);
+    recordEvent("digest", `${matches.length} Spiele heute`);
     logger.info(`Daily Digest gepostet (${matches.length} Spiele)`);
   } catch (error: unknown) {
     logger.error("Daily Digest fehlgeschlagen", error);

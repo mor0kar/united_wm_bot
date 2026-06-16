@@ -15,14 +15,16 @@
 import "dotenv/config";
 import { postMessage } from "./discord/webhook";
 import { startScheduler } from "./scheduler";
-import { startHealthServer } from "./health";
+import { startStatusServer } from "./health";
+import { recordEvent } from "./status";
 import { logger } from "./utils/logger";
 
 async function main(): Promise<void> {
   logger.info("WM Bot 2026 startet …");
 
-  // Health-Server zuerst, damit der Port (Railway) sofort offen ist.
-  startHealthServer();
+  // Status-Server zuerst, damit der Port (Railway) sofort offen ist.
+  startStatusServer();
+  recordEvent("start", "Bot gestartet");
 
   try {
     await postMessage("Ich bin bereit 🏆");

@@ -130,7 +130,10 @@ Kanonisches Aufgaben- und Evidenzboard.
 
 ## Erledigt
 
-<!-- Abgeschlossene Tasks mit Datum und kurzer Evidenz -->
+### [012] Status-Seite (Mini-Dashboard)
+- **Status:** 🟢 Erledigt
+- **Beschreibung:** Health-Server zu Status-Server ausgebaut (`src/health.ts` + `src/status.ts`): HTML-Seite unter `/` (Uptime, nächstes Spiel, letzte Aktionen), `GET /api/status` (JSON), token-geschützte Trigger `POST /api/trigger/{digest,reminder-check,result-check}` (Header `x-dashboard-token`, aktiv nur bei gesetztem `DASHBOARD_TOKEN`). Gleicher Prozess, kein extra Service.
+- **Evidenz:** 2026-06-16 — lokal verifiziert: /health 200, /api/status zeigt nächstes Spiel + Events, HTML lädt, Trigger ohne/falschem Token → 403, mit Token → 202. Build grün.
 
 ---
 

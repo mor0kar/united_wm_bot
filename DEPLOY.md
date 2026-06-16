@@ -22,6 +22,11 @@ Anleitung, um den Bot dauerhaft (24/7) auf [Railway.app](https://railway.app) la
 | `DISCORD_WEBHOOK_URL` | Webhook-URL aus dem Discord-Channel | ✅ |
 | `FOOTBALL_DATA_API_KEY` | API-Key von football-data.org | ✅ |
 | `LOG_LEVEL` | `info` (oder `debug`/`warn`/`error`) | optional |
+| `DASHBOARD_TOKEN` | frei wählbar; aktiviert die Trigger-Buttons der Status-Seite | optional |
+
+> **Status-Seite:** Railway vergibt eine öffentliche URL (Settings → Networking →
+> Generate Domain). Unter `/` liegt eine kleine Status-Seite (Uptime, nächstes Spiel,
+> letzte Aktionen). Mit gesetztem `DASHBOARD_TOKEN` kannst du dort Posts manuell auslösen.
 
 > `PORT` setzt Railway automatisch — **nicht** selbst setzen.
 > Die echten Werte stehen lokal in `.env` (wird nicht deployt, da gitignored).

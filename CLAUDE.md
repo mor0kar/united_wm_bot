@@ -45,8 +45,10 @@ Funktionen:
 ```
 wm-bot/
 ├── src/
-│   ├── index.ts                 # Entry-Point, startet Scheduler
+│   ├── index.ts                 # Entry-Point, startet Status-Server + Scheduler
 │   ├── config.ts                # Validierte .env-Zugriffe
+│   ├── health.ts                # Status-/Health-Server (/, /health, /api/status, Trigger)
+│   ├── status.ts                # In-Memory Event-Log (letzte Aktionen)
 │   ├── discord/
 │   │   └── webhook.ts           # Webhook-Ausgabe (postMessage / postEmbeds)
 │   ├── scheduler/

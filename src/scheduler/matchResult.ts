@@ -17,6 +17,7 @@ import { postEmbeds } from "../discord/webhook";
 import { buildResultEmbed } from "../embeds/resultEmbed";
 import { parseUtc, TIMEZONE, toApiDate } from "../utils/time";
 import { isNightKickoff } from "./nightWindow";
+import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
 // Alle 3 Minuten prüfen (mit 60s-Cache der API also ~1 Request/3 Min).
@@ -54,9 +55,9 @@ export async function checkResults(): Promise<void> {
       posted.add(match.id);
       const venue = await getVenue(match.homeTeam.name, match.awayTeam.name);
       await postEmbeds([buildResultEmbed(match, venue)]);
-      logger.info(
-        `Ergebnis gepostet: ${match.homeTeam.name} ${match.score.fullTime.home}-${match.score.fullTime.away} ${match.awayTeam.name}`,
-      );
+      const line = `${match.homeTeam.name} ${match.score.fullTime.home}-${match.score.fullTime.away} ${match.awayTeam.name}`;
+      recordEvent("result", line);
+      logger.info(`Ergebnis gepostet: ${line}`);
     }
   } catch (error: unknown) {
     logger.error("Ergebnis-Check fehlgeschlagen", error);
