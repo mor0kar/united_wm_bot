@@ -108,13 +108,13 @@ Kanonisches Aufgaben- und Evidenzboard.
   gewünscht sind, ginge das später als separater Bot (Gateway) oder Interactions-Endpoint.
 
 ### [011] Railway Deployment
-- **Status:** 🟡 In Arbeit
+- **Status:** 🟢 Erledigt
 - **Priorität:** Hoch
 - **Agent:** implementer
 - **Beschreibung:** Railway Projekt einrichten, Env Vars setzen, Deploy testen. Bot soll dauerhaft laufen.
 - **Akzeptanzkriterium:** Bot läuft 24/7 auf Railway, erscheint online im Discord
 - **Prüfmethode:** Railway Logs prüfen, Bot-Status in Discord checken
-- **Evidenz:** 2026-06-16 — Deploy-Vorbereitung fertig: `src/health.ts` (Healthcheck auf `PORT`, `/health` liefert 200 lokal verifiziert), `railway.json` (Nixpacks, Healthcheck, Restart-Policy), `.nvmrc` (Node 20), `DEPLOY.md` (Schritt-für-Schritt + Env-Checkliste). Build grün. **Offen (braucht User):** git-Repo + GitHub-Push ODER Railway CLI, Env-Vars im Dashboard setzen, Deploy klicken.
+- **Evidenz:** 2026-06-16 — LIVE auf Railway. Deploy aus GitHub `mor0kar/united_wm_bot`. Railway-Logs: Health-Server auf Port 8080, Bereitschaftsnachricht gepostet, alle 3 Scheduler registriert, „WM Bot 2026 läuft.". Setup: `src/health.ts`, `railway.json`, `.nvmrc`, `DEPLOY.md`.
 
 ---
 
