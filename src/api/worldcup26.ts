@@ -50,22 +50,36 @@ export interface Venue {
 
 // --- Cache (Stadien/Spiele sind quasi statisch -> lange TTL) ---
 
-interface CacheEntry<T> {
-  value: T;
-  expiresAt: number;
+// worldcup26.ir ist ein langsames Community-Projekt (~12s/Request) und bricht
+// zeitweise ab. Deshalb großzügiger Timeout + Retries.
+const HTTP_TIMEOUT_MS = 20_000;
+const HTTP_RETRIES = 3;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
-const cache = new Map<string, CacheEntry<unknown>>();
-
-async function cachedGet<T>(path: string, ttlMs: number): Promise<T> {
-  const hit = cache.get(path);
-  if (hit && Date.now() < hit.expiresAt) {
-    return hit.value as T;
+/** GET mit Retries + großzügigem Timeout, sauberes Fehler-Logging (kein Dump). */
+async function httpGet<T>(path: string): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= HTTP_RETRIES; attempt++) {
+    try {
+      const response = await axios.get<T>(`${BASE_URL}${path}`, {
+        timeout: HTTP_TIMEOUT_MS,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      lastError = error;
+      const reason = axios.isAxiosError(error)
+        ? (error.code ?? error.message)
+        : String(error);
+      logger.warn(
+        `worldcup26.ir ${path} Versuch ${attempt}/${HTTP_RETRIES} fehlgeschlagen: ${reason}`,
+      );
+      if (attempt < HTTP_RETRIES) await delay(1000 * attempt);
+    }
   }
-  const response = await axios.get<T>(`${BASE_URL}${path}`, { timeout: 12_000 });
-  cache.set(path, { value: response.data, expiresAt: Date.now() + ttlMs });
-  return response.data;
+  throw lastError;
 }
 
 // --- Team-Namen normalisieren (für robustes Matching trotz Schreibvarianten) ---
@@ -77,6 +91,11 @@ const TEAM_ALIASES: Record<string, string> = {
   "united states": "usa",
   "cape verde": "cabo verde",
   iran: "ir iran",
+  // football-data: "Congo DR" | worldcup26: "Democratic Republic of the Congo"
+  "congo dr": "congo",
+  "dr congo": "congo",
+  "democratic republic of congo": "congo",
+  "democratic republic of the congo": "congo",
 };
 
 function normalizeTeam(name: string): string {
@@ -98,25 +117,26 @@ function pairKey(home: string, away: string): string {
 
 /** Alle Stadien. */
 export async function getStadiums(): Promise<RawStadium[]> {
-  const data = await cachedGet<StadiumsResponse>("/get/stadiums", SIX_HOURS_MS);
+  const data = await httpGet<StadiumsResponse>("/get/stadiums");
   return data.stadiums ?? [];
 }
 
 /** Alle Spiele. */
 export async function getGames(): Promise<RawGame[]> {
-  const data = await cachedGet<GamesResponse>("/get/games", SIX_HOURS_MS);
+  const data = await httpGet<GamesResponse>("/get/games");
   return data.games ?? [];
 }
 
-// In-Memory-Index: pairKey -> Venue (lazy aufgebaut, bei Cache-Refresh neu)
+// --- Venue-Index mit stale-while-revalidate ---
+// Stadion-Zuordnungen sind für das Turnier statisch. Ein einmal gebauter Index
+// wird bei worldcup26.ir-Ausfällen NICHT geleert — Stadien verschwinden nie mehr.
+
+const INDEX_TTL_MS = 12 * 60 * 60 * 1000;
 let venueIndex: Map<string, Venue> | null = null;
-let venueIndexExpiresAt = 0;
+let venueIndexBuiltAt = 0;
+let buildInFlight: Promise<Map<string, Venue>> | null = null;
 
-async function buildVenueIndex(): Promise<Map<string, Venue>> {
-  if (venueIndex && Date.now() < venueIndexExpiresAt) {
-    return venueIndex;
-  }
-
+async function rebuildIndex(): Promise<Map<string, Venue>> {
   const [stadiums, games] = await Promise.all([getStadiums(), getGames()]);
   const stadiumById = new Map<string, RawStadium>();
   for (const s of stadiums) stadiumById.set(s.id, s);
@@ -127,37 +147,66 @@ async function buildVenueIndex(): Promise<Map<string, Venue>> {
     if (!game.home_team_name_en || !game.away_team_name_en) continue;
     const stadium = stadiumById.get(game.stadium_id);
     if (!stadium) continue;
-    const venue: Venue = {
-      stadium: stadium.name_en,
-      city: stadium.city_en,
-    };
+    const venue: Venue = { stadium: stadium.name_en, city: stadium.city_en };
     // Beide Richtungen indexieren, falls Heim/Auswärts vertauscht geliefert wird.
     index.set(pairKey(game.home_team_name_en, game.away_team_name_en), venue);
     index.set(pairKey(game.away_team_name_en, game.home_team_name_en), venue);
   }
 
   venueIndex = index;
-  venueIndexExpiresAt = Date.now() + SIX_HOURS_MS;
+  venueIndexBuiltAt = Date.now();
+  logger.info(`worldcup26.ir Venue-Index gebaut (${index.size / 2} Spiele)`);
   return index;
 }
 
 /**
+ * Liefert den Venue-Index. Bei Fehlern wird der letzte gute Stand serviert
+ * (stale-while-revalidate). Nur EIN Build gleichzeitig (API ist langsam).
+ */
+async function getIndex(): Promise<Map<string, Venue> | null> {
+  const fresh = venueIndex && Date.now() - venueIndexBuiltAt < INDEX_TTL_MS;
+  if (fresh) return venueIndex;
+
+  if (!buildInFlight) {
+    buildInFlight = rebuildIndex().finally(() => {
+      buildInFlight = null;
+    });
+  }
+
+  // Veralteten Index haben? -> sofort zurück, Rebuild läuft im Hintergrund weiter.
+  if (venueIndex) {
+    buildInFlight.catch(() => undefined);
+    return venueIndex;
+  }
+
+  // Noch nie erfolgreich gebaut -> auf den Build warten.
+  try {
+    return await buildInFlight;
+  } catch {
+    return null; // Fehler bereits in httpGet geloggt
+  }
+}
+
+/** Baut den Venue-Index beim Start vor (fire-and-forget). */
+export function warmVenueIndex(): void {
+  void getIndex().then((idx) => {
+    if (!idx) {
+      logger.warn(
+        "worldcup26.ir Venue-Index beim Start nicht gebaut — wird bei Bedarf erneut versucht",
+      );
+    }
+  });
+}
+
+/**
  * Liefert Stadion + Stadt für eine Team-Paarung, oder `null` wenn nicht
- * auffindbar. Fehler werden geloggt, führen aber zu `null` (Anreicherung
- * ist optional, darf den Post nie blockieren).
+ * auffindbar. Blockiert nie einen Post (Anreicherung ist optional).
  */
 export async function getVenue(
   homeTeam: string,
   awayTeam: string,
 ): Promise<Venue | null> {
-  try {
-    const index = await buildVenueIndex();
-    return index.get(pairKey(homeTeam, awayTeam)) ?? null;
-  } catch (error: unknown) {
-    logger.warn(
-      `worldcup26.ir Venue-Lookup fehlgeschlagen für ${homeTeam} vs ${awayTeam} — fahre ohne Stadion fort`,
-      error,
-    );
-    return null;
-  }
+  const index = await getIndex();
+  if (!index) return null;
+  return index.get(pairKey(homeTeam, awayTeam)) ?? null;
 }

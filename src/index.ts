@@ -17,6 +17,7 @@ import { config } from "./config";
 import { postMessage } from "./discord/webhook";
 import { startScheduler } from "./scheduler";
 import { startStatusServer } from "./health";
+import { warmVenueIndex } from "./api/worldcup26";
 import { recordEvent } from "./status";
 import { logger } from "./utils/logger";
 
@@ -26,6 +27,9 @@ async function main(): Promise<void> {
   // Status-Server zuerst, damit der Port (Railway) sofort offen ist.
   startStatusServer();
   recordEvent("start", "Bot gestartet");
+
+  // Venue-Index (worldcup26.ir) vorwärmen, damit Stadien beim Digest bereitstehen.
+  warmVenueIndex();
 
   try {
     await postMessage("Ich bin bereit 🏆");

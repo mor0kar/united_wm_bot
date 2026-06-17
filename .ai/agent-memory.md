@@ -40,8 +40,16 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
   - `/get/teams` → `{ teams: [...] }` (48): `id, name_en, flag (URL), iso2, fifa_code, groups`
   - `/get/games` → `{ games: [...] }` (104): `home_team_name_en, away_team_name_en, stadium_id, group, matchday, local_date "MM/DD/YYYY HH:MM", home_score, away_score, finished`
   - `/get/groups` → `{ groups: [...] }`: `name "A".."L"`, `teams: [{team_id, mp,w,l,d,pts,gf,ga,gd}]` (Werte als Strings!)
-- **Venue-Join:** football-data ↔ worldcup26 über Team-Namen-Paar (englisch, gleiche Schreibweise).
+- **Venue-Join:** football-data ↔ worldcup26 über Team-Namen-Paar (englisch).
   K.o.-Spiele ohne feststehende Teams haben leere `*_name_en` → beim Index-Aufbau überspringen!
+- **⚠️ SEHR langsam/unzuverlässig** (verifiziert 2026-06-17: ~12s/Request, zeitweise
+  ECONNRESET/ECONNABORTED). Deshalb in `worldcup26.ts`: Timeout 20s, 3 Retries,
+  Venue-Index mit **stale-while-revalidate** (einmal gebaut → wird bei Fehlern NIE geleert),
+  Single-Flight-Build, **Warmup beim Start** (`warmVenueIndex()` in index.ts).
+  Ursache für "Stadien fehlten im Digest" am 2026-06-17: erste Anfrage timeoutete.
+- **Namensabweichungen** (football-data → worldcup26), als Alias in `TEAM_ALIASES`:
+  "Congo DR" → "Democratic Republic of the Congo"; Turkey→Türkiye; South Korea→Korea Republic;
+  Ivory Coast→Côte d'Ivoire; Cape Verde→Cabo Verde; Iran→IR Iran; United States→USA.
 - Community-Projekt — nicht als primäre Quelle nutzen
 
 ---
