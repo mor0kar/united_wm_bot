@@ -113,6 +113,11 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
   aus wie Doppel-Posts.
 - football-data `group` = "GROUP_G": Gruppenbuchstabe via Präfix-Strip extrahieren
   (`replace(/^GROUP[_\s]?/, "")`), NICHT alle Nicht-A-L-Zeichen entfernen (sonst "GG").
+- **Digest splittet bei >25 Spielen** in mehrere Embeds (Discord-Limit: 25 Felder/Embed).
+  `buildDigestEmbed` liefert daher `EmbedBuilder[]`.
+- **Multi-Agent-Cleanup 2026-06-17:** toter Code entfernt (getStandings/getMatchById/Standings-Typen,
+  Match.venue, matchEmbed.ts, postMessage, cheerio-Dependency). Status-Seite gehärtet
+  (XSS-Escaping, timing-safe Token, Query-String-Pfad). README.md angelegt.
 - Zeitzonen: intern UTC, Ausgabe immer MESZ (UTC+2)
 - Discord Embeds: Primärfarbe `#C0392B`, Akzent `#FFD700`
 - **Ausgabe via Discord-Webhook** (entschieden 2026-06-16): Push-only, kein Bot-Token,
@@ -126,7 +131,7 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
 | Datei | Zweck |
 |---|---|
 | `src/index.ts` | Entry-Point, startet Scheduler |
-| `src/discord/webhook.ts` | Webhook-Ausgabe (postMessage / postEmbeds) |
+| `src/discord/webhook.ts` | Webhook-Ausgabe (postEmbeds; live/test/dry-run) |
 | `src/config.ts` | Validierte .env-Zugriffe |
 | `src/api/footballData.ts` | Primäre Datenquelle (Cache + Rate-Limit-Handling) |
 | `src/api/worldcup26.ts` | Venue-Fallback (`getVenue(home, away)` → Stadion + Stadt) |

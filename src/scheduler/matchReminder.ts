@@ -24,7 +24,9 @@ import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
 export const REMINDER_LEAD_MIN = 30;
-// Reminder feuert, wenn die Restzeit in (LEAD - WINDOW, LEAD + 0.5] liegt.
+// Reminder feuert im Restzeit-Fenster (LEAD - WINDOW, LEAD + 0.5] = (28, 30.5],
+// also ~2.5 Min breit. Bei Minuten-Cron landen 2-3 Ticks darin; Dedup-Set sorgt
+// dafür, dass nur der erste postet.
 const REMINDER_WINDOW_MIN = 2;
 // Reminder nur für Abendspiele VOR Mitternacht. Spiele mit Anpfiff vor dieser
 // MESZ-Stunde (Nacht-/Vormittagsspiele, z.B. 00:00 / 03:00 / 06:00 MESZ) bekommen

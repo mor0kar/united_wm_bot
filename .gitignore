@@ -9,3 +9,4 @@ npm-debug.log*
 # Lokaler / persönlicher Kram (nicht teilen)
 .remember/
 .claude/settings.local.json
+.claude/agent-memory/

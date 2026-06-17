@@ -25,7 +25,7 @@ export async function postDailyDigest(): Promise<void> {
       const venue = await getVenue(match.homeTeam.name, match.awayTeam.name);
       entries.push({ match, venue });
     }
-    await postEmbeds([buildDigestEmbed(entries)]);
+    await postEmbeds(buildDigestEmbed(entries));
     recordEvent("digest", `${matches.length} Spiele heute`);
     logger.info(`Daily Digest gepostet (${matches.length} Spiele)`);
   } catch (error: unknown) {

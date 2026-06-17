@@ -13,6 +13,7 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { timingSafeEqual } from "node:crypto";
 import {
   getMatchesToday,
   getMatchesTomorrow,
@@ -70,8 +71,12 @@ function sendJson(res: ServerResponse, code: number, body: unknown): void {
 function checkAuth(req: IncomingMessage): "ok" | "disabled" | "forbidden" {
   const expected = process.env.DASHBOARD_TOKEN;
   if (!expected) return "disabled";
-  const provided = req.headers["x-dashboard-token"];
-  return provided === expected ? "ok" : "forbidden";
+  const header = req.headers["x-dashboard-token"];
+  const provided = Array.isArray(header) ? header[0] ?? "" : header ?? "";
+  // Timing-sicherer Vergleich (gleiche Länge vorausgesetzt).
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b) ? "ok" : "forbidden";
 }
 
 async function handleTrigger(
@@ -90,7 +95,11 @@ async function handleTrigger(
     return;
   }
   logger.info(`Manueller Trigger via Status-Seite: ${label}`);
-  void action(); // im Hintergrund laufen lassen, sofort antworten
+  // Im Hintergrund laufen lassen, sofort antworten. Fehler abfangen, damit
+  // keine unhandled rejection entsteht (auch wenn die Aktion intern catcht).
+  void action().catch((error: unknown) => {
+    logger.error(`Manueller Trigger '${label}' fehlgeschlagen`, error);
+  });
   sendJson(res, 202, { ok: true, triggered: label });
 }
 
@@ -98,7 +107,8 @@ async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> {
-  const url = req.url ?? "/";
+  // Nur den Pfad vergleichen — evtl. Query-String abschneiden (z.B. /health?x=1).
+  const url = (req.url ?? "/").split("?")[0] ?? "/";
   const method = req.method ?? "GET";
 
   if (method === "GET" && url === "/health") {
@@ -229,6 +239,12 @@ const STATUS_PAGE_HTML = `<!DOCTYPE html>
   tokenEl.value = localStorage.getItem('wmbot_token') || '';
   tokenEl.addEventListener('input', () => localStorage.setItem('wmbot_token', tokenEl.value));
 
+  // HTML-Escaping gegen XSS — Event-Daten stammen aus der externen API.
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   function toast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
@@ -253,7 +269,7 @@ const STATUS_PAGE_HTML = `<!DOCTYPE html>
         ? d.nextMatch.home + ' – ' + d.nextMatch.away + '  ·  ' + d.nextMatch.kickoff
         : 'Aktuell kein anstehendes Spiel';
       document.getElementById('events').innerHTML = d.events.length
-        ? d.events.map(e => '<div class="ev"><span><span class="k">'+e.kind+'</span> &nbsp;'+e.summary+'</span><span class="t">'+fmtAgo(e.at)+'</span></div>').join('')
+        ? d.events.map(e => '<div class="ev"><span><span class="k">'+esc(e.kind)+'</span> &nbsp;'+esc(e.summary)+'</span><span class="t">'+esc(fmtAgo(e.at))+'</span></div>').join('')
         : '<span class="t">noch keine Aktionen</span>';
       document.getElementById('trigHint').textContent = d.triggersEnabled
         ? '' : 'Trigger deaktiviert — setze DASHBOARD_TOKEN in den Env-Vars, um sie zu aktivieren.';

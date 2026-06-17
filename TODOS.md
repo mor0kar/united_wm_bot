@@ -95,9 +95,10 @@ Kanonisches Aufgaben- und Evidenzboard.
 - **Status:** ⚪ Offen
 - **Priorität:** Mittel
 - **Agent:** api-specialist + discord-specialist
-- **Beschreibung:** `src/api/sportschauScraper.ts` — Pollt sportschau.de/fussball/fifa-wm-2026/ alle 10min nach Spielende auf neue Highlight-Videos. Postet `src/embeds/sportschauEmbed.ts` mit Thumbnail + Link wenn gefunden.
+- **Beschreibung:** `src/api/sportschauScraper.ts` — Pollt sportschau.de/fussball/fifa-wm-2026/ alle 10min nach Spielende auf neue Highlight-Videos. Postet `src/embeds/sportschauEmbed.ts` (existiert bereits) mit Thumbnail + Link wenn gefunden.
 - **Akzeptanzkriterium:** Sportschau-Embed erscheint innerhalb 15min nachdem Zusammenfassung online ist
 - **Prüfmethode:** Manuell URL prüfen und Embed testen
+- **Hinweis:** `cheerio` wurde beim Cleanup 2026-06-17 entfernt (war ungenutzt) → für den HTML-Parser hier wieder `npm i cheerio`.
 - **Evidenz:** —
 
 ### [010] Slash Commands — ⛔ VERWORFEN
@@ -135,6 +136,16 @@ Kanonisches Aufgaben- und Evidenzboard.
 - **Beschreibung:** Health-Server zu Status-Server ausgebaut (`src/health.ts` + `src/status.ts`): HTML-Seite unter `/` (Uptime, nächstes Spiel, letzte Aktionen), `GET /api/status` (JSON), token-geschützte Trigger `POST /api/trigger/{digest,reminder-check,result-check}` (Header `x-dashboard-token`, aktiv nur bei gesetztem `DASHBOARD_TOKEN`). Gleicher Prozess, kein extra Service.
 - **Evidenz:** 2026-06-16 — lokal verifiziert: /health 200, /api/status zeigt nächstes Spiel + Events, HTML lädt, Trigger ohne/falschem Token → 403, mit Token → 202. Build grün.
 
+### [013] Codebase- & Repo-Cleanup (Multi-Agent-Review)
+- **Status:** 🟢 Erledigt
+- **Beschreibung:** Paralleler Review durch 5 Spezial-Agenten (api/scheduler/discord/security/hygiene), konsolidiert + gefixt.
+  - **Bugs/Robustheit:** Digest splittet bei >25 Spielen in mehrere Embeds (25-Felder-Limit); Status-Seite XSS-Escaping (innerHTML mit API-Daten); URL-Matching ignoriert Query-String (Healthcheck-Robustheit); timing-safe Token-Vergleich (`crypto.timingSafeEqual`); `void action().catch` (keine unhandled rejection).
+  - **Toter Code entfernt:** `getStandings`/`getMatchById`/`StandingRow`/`GroupStanding`/`normalizeGroup`, `Match.venue`-Feld, `matchEmbed.ts`, `postMessage`, `cheerio`-Dependency.
+  - **Hygiene:** README.md angelegt; CLAUDE.md-Struktur + Roadmap + DEPLOY.md an Realität angeglichen; `.claude/agent-memory/` ge-gitignored; Kommentar-Klarstellungen.
+  - **Geprüft & als korrekt bestätigt** (kein Fix nötig): `tomorrowApiDate`/`checkResults`-Fenster (−24h verschiebt MESZ-Tag exakt um 1, nur klarer geschrieben), Dedup-Reihenfolge (Set vor await), worldcup26 stale-while-revalidate.
+  - **Bewusst NICHT gemacht:** node-cron 4.x Update (Breaking Change, nicht während der WM), npm-audit moderate uuid-Transitive (kein Impact, da keine Buffer an uuid).
+- **Evidenz:** 2026-06-17 — Build + Typecheck grün; Digest-Split (30→2 Embeds), Health-Fixes (Query 200, Token 403/202, esc() vorhanden) lokal verifiziert.
+
 ---
 
 ## Bekannte Risiken
@@ -142,7 +153,9 @@ Kanonisches Aufgaben- und Evidenzboard.
 - football-data.org Free Tier: 10 Req/min — bei vielen gleichzeitigen Spielen könnte das knapp werden (Lösung: Caching)
 - worldcup26.ir ist ein Community-Projekt — Reliability unklar, daher nur als Fallback
 - Sportschau hat kein offizielles API — Scraper könnte brechen wenn sich HTML ändert
-- Node-cron verliert Jobs bei Neustart — nach Railway Redeploy alle Jobs neu planen
+- Node-cron verliert Jobs bei Neustart — durch Polling-Crons (Zustand aus API) entschärft
+- worldcup26.ir langsam/unzuverlässig — durch Retry + stale-while-revalidate + Warmup entschärft
+- `npm audit`: moderate uuid-Schwachstelle (transitiv über node-cron). Kein Impact (keine Buffer an uuid). node-cron 4.x wäre Breaking — bewusst NICHT während der WM aktualisiert.
 
 ---
 

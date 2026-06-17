@@ -103,9 +103,11 @@ export function todayApiDate(): string {
   return toApiDate(new Date());
 }
 
-/** Morgiges Datum (MESZ) als YYYY-MM-DD. */
+/**
+ * Morgiges Datum (MESZ) als YYYY-MM-DD.
+ * +24h verschiebt den MESZ-Kalendertag exakt um 1 (MESZ ist im WM-Zeitraum
+ * fix UTC+2, keine DST-Umstellung).
+ */
 export function tomorrowApiDate(): string {
-  const tomorrow = new Date();
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  return toApiDate(tomorrow);
+  return toApiDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
 }

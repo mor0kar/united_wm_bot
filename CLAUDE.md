@@ -43,42 +43,42 @@ Funktionen:
 ## Projektstruktur
 
 ```
-wm-bot/
+united_wm_bot/
 ├── src/
 │   ├── index.ts                 # Entry-Point, startet Status-Server + Scheduler
 │   ├── config.ts                # Validierte .env-Zugriffe
 │   ├── health.ts                # Status-/Health-Server (/, /health, /api/status, Trigger)
 │   ├── status.ts                # In-Memory Event-Log (letzte Aktionen)
 │   ├── discord/
-│   │   └── webhook.ts           # Webhook-Ausgabe (postMessage / postEmbeds)
+│   │   └── webhook.ts           # Webhook-Ausgabe (postEmbeds, live/test/dry-run)
 │   ├── scheduler/
 │   │   ├── index.ts             # Alle Cron Jobs registrieren
 │   │   ├── dailyDigest.ts       # 08:30 MESZ — Tages-Spielplan
-│   │   ├── matchReminder.ts     # 30min vor Anpfiff — Reminder
-│   │   ├── matchResult.ts       # Nach Spielende — Ergebnis posten
-│   │   └── sportschau.ts        # Polling für Sportschau-Zusammenfassungen
+│   │   ├── matchReminder.ts     # 30min vor Anpfiff — Reminder (nur vor Mitternacht)
+│   │   └── matchResult.ts       # Nach Spielende — Ergebnis posten
 │   ├── api/
-│   │   ├── footballData.ts      # football-data.org v4 wrapper
-│   │   ├── worldcup26.ts        # worldcup26.ir wrapper (Fallback/Stadion-Details)
-│   │   └── sportschauScraper.ts # Sportschau.de polling für WM-Highlights
+│   │   ├── footballData.ts      # football-data.org v4 wrapper (primär)
+│   │   └── worldcup26.ts        # worldcup26.ir wrapper (Stadion/Stadt-Anreicherung)
 │   ├── embeds/
-│   │   ├── matchEmbed.ts        # Embed für anstehende Spiele
-│   │   ├── resultEmbed.ts       # Embed für Ergebnisse
+│   │   ├── shared.ts            # Farben + Matchup/Stage/Venue-Formatierung
+│   │   ├── digestEmbed.ts       # Embed(s) für Tagesübersicht
 │   │   ├── reminderEmbed.ts     # Embed für 30min-Reminder
-│   │   ├── digestEmbed.ts       # Embed für Tagesübersicht
-│   │   └── sportschauEmbed.ts   # Embed für Sportschau-Zusammenfassung
+│   │   ├── resultEmbed.ts       # Embed für Ergebnisse
+│   │   └── sportschauEmbed.ts   # Embed für Sportschau (geplant, Task [009])
 │   └── utils/
 │       ├── time.ts              # Zeitzonenkonvertierung (UTC → MESZ)
 │       ├── flags.ts             # Länder-Emoji-Flaggen map
 │       └── logger.ts            # Simples Logging
 ├── .env.example                 # Template für Umgebungsvariablen
-├── .gitignore
-├── CLAUDE.md
-├── AGENTS.md
-├── TODOS.md
+├── .gitignore / .gitattributes
+├── README.md / CLAUDE.md / AGENTS.md / TODOS.md / DEPLOY.md
+├── railway.json / .nvmrc        # Railway-Deploy-Config, Node-Pinning
 ├── package.json
 └── tsconfig.json
 ```
+
+> Noch nicht implementiert (Task [009], siehe TODOS.md): `src/api/sportschauScraper.ts`
+> und `src/scheduler/sportschau.ts` für die Sportschau-Highlights.
 
 ---
 
@@ -167,11 +167,12 @@ LOG_LEVEL=               # optional: debug | info | warn | error (Default: info)
 - [x] Utils (Zeit/Flaggen/Logger) + Config
 - [x] football-data.org wrapper bauen & testen (live verifiziert)
 - [x] Discord-Webhook-Ausgabe (live verifiziert)
-- [x] Embeds (Digest, Reminder, Ergebnis, Sportschau)
+- [x] Embeds (Digest, Reminder, Ergebnis)
 - [x] worldcup26.ir wrapper (Stadion/Stadt, da football-data kein venue liefert)
 - [x] Cron-Scheduler für Digest (08:30) + Reminder (T-30) + Ergebnis
+- [x] Railway Deployment (live)
+- [x] Status-Seite (Uptime, nächstes Spiel, letzte Posts, Trigger)
 - [ ] Sportschau-Scraper
-- [ ] Railway Deployment
 
 ---
 

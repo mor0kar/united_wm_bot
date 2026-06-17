@@ -63,37 +63,14 @@ export interface Match {
   homeTeam: Team;
   awayTeam: Team;
   score: Score;
-  venue: string | null;
-}
-
-export interface StandingRow {
-  position: number;
-  team: Team;
-  playedGames: number;
-  won: number;
-  draw: number;
-  lost: number;
-  points: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDifference: number;
-}
-
-export interface GroupStanding {
-  stage: string;
-  type: string;
-  group: string | null;
-  table: StandingRow[];
+  // Hinweis: football-data Free Tier liefert KEIN venue-Feld — Stadion/Stadt
+  // kommen über worldcup26.ir (siehe api/worldcup26.ts).
 }
 
 // --- Raw Response Shapes (nur intern zum Parsen) ---
 
 interface MatchesResponse {
   matches: Match[];
-}
-
-interface StandingsResponse {
-  standings: GroupStanding[];
 }
 
 // --- Simpler In-Memory Cache mit TTL ---
@@ -211,31 +188,3 @@ export async function getMatchesTomorrow(): Promise<Match[]> {
   return getMatchesByDate(tomorrowApiDate());
 }
 
-/** Einzelnes Match per ID. */
-export async function getMatchById(id: number): Promise<Match> {
-  const path = `/matches/${id}`;
-  // football-data liefert das Match direkt als Objekt zurück
-  return cachedGet<Match>(path);
-}
-
-/**
- * Gruppen-Standings. Ohne Argument: alle Gruppen.
- * Mit `group` (z.B. "E" oder "Group E"): nur die passende Gruppe.
- */
-export async function getStandings(
-  group?: string,
-): Promise<GroupStanding[]> {
-  const path = `/competitions/${COMPETITION}/standings?season=${SEASON}`;
-  const data = await cachedGet<StandingsResponse>(path);
-  const all = data.standings ?? [];
-  if (!group) return all;
-
-  const normalized = normalizeGroup(group);
-  return all.filter((s) => s.group && normalizeGroup(s.group) === normalized);
-}
-
-/** "E", "e", "Group E", "GROUP_E" -> "E" */
-function normalizeGroup(group: string): string {
-  const match = group.toUpperCase().match(/[A-L]\b|[A-L]$/);
-  return match ? match[0] : group.toUpperCase().trim();
-}

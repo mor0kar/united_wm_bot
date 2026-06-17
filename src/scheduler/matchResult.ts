@@ -15,7 +15,12 @@ import {
 import { getVenue } from "../api/worldcup26";
 import { postEmbeds } from "../discord/webhook";
 import { buildResultEmbed } from "../embeds/resultEmbed";
-import { parseUtc, TIMEZONE, toApiDate } from "../utils/time";
+import {
+  parseUtc,
+  previousApiDate,
+  TIMEZONE,
+  todayApiDate,
+} from "../utils/time";
 import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
@@ -41,13 +46,15 @@ export function isResultDue(match: Match, now: number = Date.now()): boolean {
 /** Prüft gestrige + heutige Spiele und postet neue Endstände. */
 export async function checkResults(): Promise<void> {
   try {
-    const now = new Date();
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const matches = await getMatchesBetween(toApiDate(yesterday), toApiDate(now));
+    // Gestern + heute (MESZ) abdecken — fängt auch Spiele, die nach Mitternacht
+    // enden. Konsistent mit getMatchesByDate (UTC-Fenster).
+    const today = todayApiDate();
+    const matches = await getMatchesBetween(previousApiDate(today), today);
 
+    const now = Date.now();
     for (const match of matches) {
       if (posted.has(match.id)) continue;
-      if (!isResultDue(match, now.getTime())) continue;
+      if (!isResultDue(match, now)) continue;
 
       posted.add(match.id);
       const venue = await getVenue(match.homeTeam.name, match.awayTeam.name);

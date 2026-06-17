@@ -1,9 +1,12 @@
 /**
- * Tagesübersicht (Morgen-Digest, 08:00 MESZ).
- * Listet alle Spiele des Tages mit Anstoßzeit, Teams und Stadion.
+ * Tagesübersicht (Morgen-Digest, 08:30 MESZ).
+ * Listet alle Spiele des Tages mit Anstoßzeit/Endstand, Teams und Stadion.
+ *
+ * Liefert ein Array von Embeds: Discord erlaubt max. 25 Felder pro Embed,
+ * deshalb werden Spiele bei Bedarf auf mehrere Embeds aufgeteilt.
  */
 
-import { EmbedBuilder } from "discord.js";
+import { EmbedBuilder, type APIEmbedField } from "discord.js";
 import { formatDate, formatTime, parseUtc } from "../utils/time";
 import {
   COLOR_GOLD,
@@ -14,31 +17,32 @@ import {
 } from "./shared";
 import type { MatchWithVenue } from "./shared";
 
+// Discord-Limit: max. 25 Felder pro Embed.
+const MAX_FIELDS_PER_EMBED = 25;
+
 export function buildDigestEmbed(
   entries: MatchWithVenue[],
   date: Date = new Date(),
-): EmbedBuilder {
-  const embed = new EmbedBuilder()
-    .setColor(COLOR_GOLD)
-    .setTitle(`⚽ WM 2026 — Spiele am ${formatDate(date)}`)
-    .setTimestamp(date);
+): EmbedBuilder[] {
+  const title = `⚽ WM 2026 — Spiele am ${formatDate(date)}`;
 
   if (entries.length === 0) {
-    embed.setDescription("Heute spielfrei. 😴 Morgen geht's weiter!");
-    return embed;
+    return [
+      new EmbedBuilder()
+        .setColor(COLOR_GOLD)
+        .setTitle(title)
+        .setDescription("Heute spielfrei. 😴 Morgen geht's weiter!")
+        .setTimestamp(date),
+    ];
   }
 
-  // Spiele chronologisch sortieren
+  // Spiele chronologisch sortieren und in Felder umwandeln.
   const sorted = [...entries].sort(
     (a, b) =>
       parseUtc(a.match.utcDate).getTime() - parseUtc(b.match.utcDate).getTime(),
   );
 
-  embed.setDescription(
-    `**${entries.length}** ${entries.length === 1 ? "Spiel" : "Spiele"} heute:`,
-  );
-
-  for (const { match, venue } of sorted) {
+  const fields: APIEmbedField[] = sorted.map(({ match, venue }) => {
     const time = formatTime(parseUtc(match.utcDate));
     let header: string;
     let body: string;
@@ -55,8 +59,25 @@ export function buildDigestEmbed(
       body = matchup(match);
     }
 
-    embed.addFields({ name: header, value: `${body}\n📍 ${venueLine(venue)}` });
+    return { name: header, value: `${body}\n📍 ${venueLine(venue)}` };
+  });
+
+  // Felder auf mehrere Embeds aufteilen (max. 25 pro Embed).
+  const embeds: EmbedBuilder[] = [];
+  for (let i = 0; i < fields.length; i += MAX_FIELDS_PER_EMBED) {
+    const chunk = fields.slice(i, i + MAX_FIELDS_PER_EMBED);
+    const embed = new EmbedBuilder()
+      .setColor(COLOR_GOLD)
+      .setTitle(i === 0 ? title : `${title} (Fortsetzung)`)
+      .addFields(chunk);
+    if (i === 0) {
+      embed.setDescription(
+        `**${entries.length}** ${entries.length === 1 ? "Spiel" : "Spiele"} heute:`,
+      );
+    }
+    embed.setTimestamp(date);
+    embeds.push(embed);
   }
 
-  return embed;
+  return embeds;
 }

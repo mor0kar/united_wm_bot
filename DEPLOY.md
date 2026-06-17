@@ -43,14 +43,14 @@ Vorteil: Railway baut bei jedem `git push` automatisch neu.
    git add .
    git commit -m "WM Bot 2026 — initial"
    git branch -M main
-   git remote add origin https://github.com/<user>/wm-bot.git
+   git remote add origin https://github.com/mor0kar/united_wm_bot.git
    git push -u origin main
    ```
-2. Auf [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → `wm-bot` wählen.
+2. Auf [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → `united_wm_bot` wählen.
 3. Railway erkennt `railway.json` automatisch (Nixpacks, Node 20 via `.nvmrc`).
 4. **Variables** öffnen → `DISCORD_WEBHOOK_URL` und `FOOTBALL_DATA_API_KEY` eintragen.
-5. Deploy abwarten → Logs prüfen: es sollte „Alle Scheduler registriert ✅" erscheinen
-   und im Discord-Channel „Ich bin bereit 🏆".
+5. Deploy abwarten → Logs prüfen: es sollte „Status-Server lauscht…" und
+   „Alle Scheduler registriert ✅" erscheinen. (Es gibt bewusst KEINE Discord-Startnachricht.)
 
 ## Variante B — Deploy über Railway CLI (ohne GitHub)
 
@@ -68,16 +68,16 @@ Vorteil: Railway baut bei jedem `git push` automatisch neu.
 
 ## Nach dem Deploy prüfen
 
-- **Railway Logs:** „Health-Server lauscht auf Port …", „Alle Scheduler registriert ✅"
-- **Discord:** Startnachricht „Ich bin bereit 🏆" im Channel
+- **Railway Logs:** „Status-Server lauscht auf Port …", „Alle Scheduler registriert ✅"
 - **Healthcheck:** Railway zeigt den Service als „Active/Healthy"
+- **Status-Seite:** unter der Railway-Domain erreichbar (zeigt nächstes Spiel)
 - Der nächste **Daily Digest** kommt um **08:30 MESZ**.
 
 ---
 
 ## Stolperfallen
 
-- **Kein „Ich bin bereit"-Post?** → `DISCORD_WEBHOOK_URL` falsch/leer. Variables prüfen.
+- **Keine Posts im Channel?** → `DISCORD_WEBHOOK_URL` falsch/leer, oder `BOT_MODE=test` gesetzt. Variables prüfen.
 - **Build schlägt fehl?** → lokal `npm run build` testen; Node-Version muss ≥ 20 sein.
 - **Service „crashed" trotz laufender Logs?** → Healthcheck-Pfad muss `/health` sein
   (steht in `railway.json`), `PORT` darf nicht manuell überschrieben werden.

@@ -50,25 +50,6 @@ function clientFor(url: string): WebhookClient {
   return client;
 }
 
-/** Postet eine einfache Textnachricht. */
-export async function postMessage(content: string): Promise<void> {
-  const target = resolveTarget();
-  if (target.kind === "dryrun") {
-    logger.info(`[DRY-RUN] Nachricht NICHT gepostet: "${content}"`);
-    return;
-  }
-  try {
-    await clientFor(target.url).send({
-      content,
-      username: WEBHOOK_USERNAME,
-      avatarURL: WEBHOOK_AVATAR_URL,
-    });
-  } catch (error: unknown) {
-    logger.error("Webhook-Textnachricht fehlgeschlagen", error);
-    throw error;
-  }
-}
-
 /**
  * Postet ein oder mehrere Embeds (Discord erlaubt bis zu 10 pro Nachricht).
  * Optionaler Begleittext.
