@@ -25,6 +25,11 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
 - WM Season: `2026`
 - Free Tier: 10 Requests/Minute
 - Match endpoint: `GET /competitions/WC/matches?season=2026&dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD`
+- ⚠️ **`dateFrom/dateTo` filtern nach UTC-Datum!** Ein Spiel um 00:00–01:59 MESZ hat den
+  UTC-Tag des Vortags (MESZ=UTC+2). Einzeltagsabfrage für den MESZ-Tag verliert solche Spiele
+  (verifiziert 2026-06-17: Iraq-Norway 00:00 MESZ 17. hat utcDate `2026-06-16T22:00Z`, fehlte
+  im 17er-Digest). Fix in `getMatchesByDate`: UTC-Fenster [Vortag, Tag] abfragen, dann
+  client-seitig auf MESZ-Kalendertag filtern (`toApiDate(parseUtc(utcDate)) === date`).
 - ⚠️ **Free Tier liefert KEIN `venue`-Feld** (verifiziert 2026-06-16, Wert ist `undefined`).
   Stadion + Stadt müssen über worldcup26.ir-Fallback kommen (siehe TODOS [004]).
 - Match-Objekt-Keys: `area, competition, season, id, utcDate, status, matchday, stage, group, lastUpdated, homeTeam, awayTeam, score, odds, referees`

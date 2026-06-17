@@ -9,7 +9,13 @@
 
 import axios, { AxiosInstance, isAxiosError } from "axios";
 import { logger } from "../utils/logger";
-import { todayApiDate, tomorrowApiDate } from "../utils/time";
+import {
+  parseUtc,
+  previousApiDate,
+  toApiDate,
+  todayApiDate,
+  tomorrowApiDate,
+} from "../utils/time";
 
 const BASE_URL = "https://api.football-data.org/v4";
 const COMPETITION = "WC"; // FIFA World Cup
@@ -182,9 +188,17 @@ export async function getMatchesBetween(
   return data.matches ?? [];
 }
 
-/** Alle WM-Spiele an einem bestimmten Tag (MESZ-Kalendertag), YYYY-MM-DD. */
+/**
+ * Alle WM-Spiele an einem bestimmten Tag (MESZ-Kalendertag), YYYY-MM-DD.
+ *
+ * Wichtig: Die API filtert `dateFrom/dateTo` nach UTC-Datum. Ein Spiel um
+ * 00:00–01:59 MESZ hat aber den UTC-Tag des Vortags (MESZ = UTC+2). Damit
+ * solche Spiele nicht durchs Raster fallen, fragen wir das UTC-Fenster
+ * [Vortag, Tag] ab und filtern client-seitig exakt auf den MESZ-Kalendertag.
+ */
 export async function getMatchesByDate(date: string): Promise<Match[]> {
-  return getMatchesBetween(date, date);
+  const all = await getMatchesBetween(previousApiDate(date), date);
+  return all.filter((m) => toApiDate(parseUtc(m.utcDate)) === date);
 }
 
 /** Alle WM-Spiele von heute (MESZ). */

@@ -77,6 +77,17 @@ export function toApiDate(date: Date): string {
   }).format(date);
 }
 
+/** Vortag eines YYYY-MM-DD-Datums als YYYY-MM-DD (reine Kalenderrechnung). */
+export function previousApiDate(apiDate: string): string {
+  // Mittag UTC als Anker, um Sommerzeit-/DST-Ränder zu umgehen.
+  const d = new Date(`${apiDate}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 /** Heutiges Datum (MESZ) als YYYY-MM-DD. */
 export function todayApiDate(): string {
   return toApiDate(new Date());
