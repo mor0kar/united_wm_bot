@@ -109,8 +109,12 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
 - **TESTEN NIE im echten Channel:** Test-Skripte/Posts immer mit `BOT_MODE=test` ausführen.
   Dann postet der Webhook in `TEST_WEBHOOK_URL` oder macht — falls leer — einen Dry-Run
   (nur Log). Default `BOT_MODE=live` → echter Channel. Railway läuft live (kein BOT_MODE gesetzt).
-  Hintergrund: am 2026-06-16 landeten manuelle Test-Reminder im echten WM-Channel und sahen
-  aus wie Doppel-Posts.
+- **LOKALE BOT-STARTS IMMER `BOT_MODE=test` UND `timeout`/begrenzt** — und danach beenden!
+  `node dist/index.js` läuft sonst ewig weiter (HTTP-Server + Crons halten den Prozess am Leben)
+  und postet im Live-Modus mit deiner echten .env in den Channel. Am 2026-06-17 entdeckt:
+  3 Zombie-`node dist/index.js` von Test-Starts (16./17.06.) liefen tagelang durch und waren
+  DIE Ursache der "3x gepostet, 2 ohne Stadion"-Posts (alter Code → kalter Venue-Index).
+  Prüfen mit: `Get-CimInstance Win32_Process -Filter "Name='node.exe'" | ? CommandLine -like '*dist/index.js*'`.
 - football-data `group` = "GROUP_G": Gruppenbuchstabe via Präfix-Strip extrahieren
   (`replace(/^GROUP[_\s]?/, "")`), NICHT alle Nicht-A-L-Zeichen entfernen (sonst "GG").
 - **Digest splittet bei >25 Spielen** in mehrere Embeds (Discord-Limit: 25 Felder/Embed).
