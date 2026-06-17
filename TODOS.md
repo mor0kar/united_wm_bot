@@ -77,10 +77,10 @@ Kanonisches Aufgaben- und Evidenzboard.
 - **Status:** 🟢 Erledigt
 - **Priorität:** Hoch
 - **Agent:** scheduler-specialist
-- **Beschreibung:** `src/scheduler/matchReminder.ts` — jede Minute prüfen, Reminder ~30 Min vor Anpfiff. Polling statt setTimeout → übersteht Restarts. Enges Zeitfenster (T-30 bis T-28). Heutige + morgige Spiele. Reminder für ALLE Spiele (Nacht-Sperre am 2026-06-17 wieder entfernt).
-- **Akzeptanzkriterium:** Reminder kommt ~30min vor Anpfiff
+- **Beschreibung:** `src/scheduler/matchReminder.ts` — jede Minute prüfen, Reminder ~30 Min vor Anpfiff. Polling statt setTimeout → übersteht Restarts. Enges Zeitfenster (T-30 bis T-28). Heutige + morgige Spiele. **Nur Abendspiele vor Mitternacht** (Anpfiff ab 12:00 MESZ); Nacht-/Vormittagsspiele bekommen keinen Reminder (`REMINDER_MIN_KICKOFF_HOUR`).
+- **Akzeptanzkriterium:** Reminder ~30min vor Anpfiff, nur für Spiele vor Mitternacht
 - **Prüfmethode:** Reines Prädikat `isReminderDue` mit gefakter `now`
-- **Evidenz:** 2026-06-16 — `isReminderDue` verifiziert: feuert bei T-30/T-29, nicht bei T-31/T-10; FINISHED nie. Cron registriert. (2026-06-17: Nacht-Sperre entfernt, postet jetzt auch nachts.)
+- **Evidenz:** 2026-06-17 — verifiziert: 19/21/22-Uhr-Spiele feuern bei T-30; 00/03/06-Uhr-Spiele NIE. Ergebnis-Post dagegen für alle (auch nachts).
 
 ### [008] Cron Scheduler — Ergebnis-Post
 - **Status:** 🟢 Erledigt

@@ -98,9 +98,12 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
   Result `*/3 * * * *`, alle mit `timezone: 'Europe/Berlin'`. Zustand wird pro Tick aus der API
   abgeleitet → übersteht Restarts (löst das node-cron-Restart-Risiko). Reine Prädikate
   `isReminderDue` / `isResultDue` in den jeweiligen Modulen.
-- **KEINE Nacht-Sperre mehr** (entfernt 2026-06-17 auf Wunsch): Reminder UND Ergebnis
-  werden für ALLE Spiele gepostet, auch nachts (00:00/03:00 MESZ). `nightWindow.ts` und
-  `berlinHour()` wurden entfernt. (War vorher: Spiele vor 12:00 MESZ posten nichts in Echtzeit.)
+- **Reminder nur für Abendspiele vor Mitternacht** (Stand 2026-06-17): Anpfiff vor 12:00 MESZ
+  (Nacht-/Vormittagsspiele, z.B. 00:00/03:00/06:00) bekommt KEINEN 30-Min-Reminder.
+  Konstante `REMINDER_MIN_KICKOFF_HOUR=12` + `berlinHour()` in matchReminder.ts.
+- **Ergebnis-Post für ALLE Spiele**, auch nachts (keine Sperre). Digest sowieso alle.
+  (Historie: Nacht-Sperre galt mal für beide, wurde für Ergebnis dauerhaft entfernt,
+  für Reminder wieder eingeführt.)
 - **Digest zeigt Resultate:** beendete Spiele erscheinen im Digest mit Endstand
   (🏁 Beendet), laufende mit 🔴 Läuft, anstehende mit Anstoßzeit.
 - **TESTEN NIE im echten Channel:** Test-Skripte/Posts immer mit `BOT_MODE=test` ausführen.

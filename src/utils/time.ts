@@ -77,6 +77,16 @@ export function toApiDate(date: Date): string {
   }).format(date);
 }
 
+/** Stunde (0–23) eines Zeitpunkts in MESZ. */
+export function berlinHour(date: Date): number {
+  const h = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIMEZONE,
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+  return Number.parseInt(h, 10);
+}
+
 /** Vortag eines YYYY-MM-DD-Datums als YYYY-MM-DD (reine Kalenderrechnung). */
 export function previousApiDate(apiDate: string): string {
   // Mittag UTC als Anker, um Sommerzeit-/DST-Ränder zu umgehen.

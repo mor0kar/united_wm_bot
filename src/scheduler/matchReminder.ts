@@ -19,13 +19,18 @@ import {
 import { getVenue } from "../api/worldcup26";
 import { postEmbeds } from "../discord/webhook";
 import { buildReminderEmbed } from "../embeds/reminderEmbed";
-import { parseUtc, TIMEZONE } from "../utils/time";
+import { berlinHour, parseUtc, TIMEZONE } from "../utils/time";
 import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
 export const REMINDER_LEAD_MIN = 30;
 // Reminder feuert, wenn die Restzeit in (LEAD - WINDOW, LEAD + 0.5] liegt.
 const REMINDER_WINDOW_MIN = 2;
+// Reminder nur für Abendspiele VOR Mitternacht. Spiele mit Anpfiff vor dieser
+// MESZ-Stunde (Nacht-/Vormittagsspiele, z.B. 00:00 / 03:00 / 06:00 MESZ) bekommen
+// keinen Reminder. Die Grenze liegt im spiellosen Tagfenster (~06:00–18:00 MESZ).
+// (Ergebnis-Post kommt weiterhin für ALLE Spiele.)
+const REMINDER_MIN_KICKOFF_HOUR = 12;
 
 // IDs bereits erinnerter Spiele (Dedupe innerhalb eines Prozess-Laufs).
 const reminded = new Set<number>();
@@ -38,6 +43,8 @@ export function minutesUntilKickoff(match: Match, now: number = Date.now()): num
 /** True, wenn jetzt der Reminder für dieses Spiel fällig ist. */
 export function isReminderDue(match: Match, now: number = Date.now()): boolean {
   if (match.status !== "SCHEDULED" && match.status !== "TIMED") return false;
+  // Nur Abendspiele vor Mitternacht — Nacht-/Vormittagsspiele bekommen keinen Reminder.
+  if (berlinHour(parseUtc(match.utcDate)) < REMINDER_MIN_KICKOFF_HOUR) return false;
   const remaining = minutesUntilKickoff(match, now);
   return (
     remaining > REMINDER_LEAD_MIN - REMINDER_WINDOW_MIN &&
