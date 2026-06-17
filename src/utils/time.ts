@@ -77,16 +77,6 @@ export function toApiDate(date: Date): string {
   }).format(date);
 }
 
-/** Stunde (0–23) eines Zeitpunkts in MESZ. */
-export function berlinHour(date: Date): number {
-  const h = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIMEZONE,
-    hour: "2-digit",
-    hourCycle: "h23",
-  }).format(date);
-  return Number.parseInt(h, 10);
-}
-
 /** Heutiges Datum (MESZ) als YYYY-MM-DD. */
 export function todayApiDate(): string {
   return toApiDate(new Date());

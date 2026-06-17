@@ -4,8 +4,8 @@
  * Architektur: Webhook-basiert (Push-only). Der Prozess hält sich durch die
  * node-cron Scheduler am Leben und postet automatisch:
  *   - Morgen-Digest (08:30 MESZ)
- *   - 30-Min-Reminder vor Anpfiff (nicht für Nacht-Spiele)
- *   - Ergebnis nach Spielende (Nacht-Ergebnisse landen im Morgen-Digest)
+ *   - 30-Min-Reminder vor Anpfiff (für alle Spiele)
+ *   - Ergebnis nach Spielende (für alle Spiele)
  *   - Sportschau-Zusammenfassung
  *
  * Kein Discord-Gateway, kein Bot-Token — nur DISCORD_WEBHOOK_URL (siehe .env).

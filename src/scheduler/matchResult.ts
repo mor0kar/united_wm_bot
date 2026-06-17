@@ -16,7 +16,6 @@ import { getVenue } from "../api/worldcup26";
 import { postEmbeds } from "../discord/webhook";
 import { buildResultEmbed } from "../embeds/resultEmbed";
 import { parseUtc, TIMEZONE, toApiDate } from "../utils/time";
-import { isNightKickoff } from "./nightWindow";
 import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
@@ -35,8 +34,6 @@ function minutesSinceKickoff(match: Match, now: number): number {
 /** True, wenn das Ergebnis dieses Spiels jetzt gepostet werden soll. */
 export function isResultDue(match: Match, now: number = Date.now()): boolean {
   if (match.status !== "FINISHED") return false;
-  // Nacht-Spiele posten kein Echtzeit-Ergebnis — das erscheint im Morgen-Digest.
-  if (isNightKickoff(match)) return false;
   const age = minutesSinceKickoff(match, now);
   return age > 0 && age <= RESULT_MAX_AGE_MIN;
 }

@@ -77,19 +77,19 @@ Kanonisches Aufgaben- und Evidenzboard.
 - **Status:** 🟢 Erledigt
 - **Priorität:** Hoch
 - **Agent:** scheduler-specialist
-- **Beschreibung:** `src/scheduler/matchReminder.ts` — jede Minute prüfen, Reminder ~30 Min vor Anpfiff. Polling statt setTimeout → übersteht Restarts. Enges Zeitfenster (T-30 bis T-28). Heutige + morgige Spiele. **Nacht-Sperre:** Anpfiff vor 12:00 MESZ (= Nacht-/Frühmorgen-Spiele ab Mitternacht) bekommt KEINEN Reminder — nur Abendspiele vor Mitternacht.
-- **Akzeptanzkriterium:** Reminder kommt ~30min vor Anpfiff, aber nicht für Nacht-Spiele
+- **Beschreibung:** `src/scheduler/matchReminder.ts` — jede Minute prüfen, Reminder ~30 Min vor Anpfiff. Polling statt setTimeout → übersteht Restarts. Enges Zeitfenster (T-30 bis T-28). Heutige + morgige Spiele. Reminder für ALLE Spiele (Nacht-Sperre am 2026-06-17 wieder entfernt).
+- **Akzeptanzkriterium:** Reminder kommt ~30min vor Anpfiff
 - **Prüfmethode:** Reines Prädikat `isReminderDue` mit gefakter `now`
-- **Evidenz:** 2026-06-16 — `isReminderDue` verifiziert: 21:00-Spiel feuert bei T-30; 00:00- und 03:00-Spiele feuern NIE (Nacht-Sperre); FINISHED nie. Cron registriert.
+- **Evidenz:** 2026-06-16 — `isReminderDue` verifiziert: feuert bei T-30/T-29, nicht bei T-31/T-10; FINISHED nie. Cron registriert. (2026-06-17: Nacht-Sperre entfernt, postet jetzt auch nachts.)
 
 ### [008] Cron Scheduler — Ergebnis-Post
 - **Status:** 🟢 Erledigt
 - **Priorität:** Hoch
 - **Agent:** scheduler-specialist
-- **Beschreibung:** `src/scheduler/matchResult.ts` — alle 3 Min gestrige+heutige Spiele abrufen, neue FINISHED-Spiele posten. Altersgrenze 240min (Restart-Schutz). **Nacht-Sperre:** Spiele mit Anpfiff vor 12:00 MESZ posten KEIN Echtzeit-Ergebnis — die erscheinen im Morgen-Digest mit Endstand.
-- **Akzeptanzkriterium:** Ergebnis-Embed kurz nach Spielende; Nacht-Ergebnisse nur im Digest
-- **Prüfmethode:** Reine Prädikate + Digest-Vorschau
-- **Evidenz:** 2026-06-16 — `isResultDue`: 03:00-Nacht-Spiel (FINISHED) postet KEIN Echtzeit-Ergebnis; Abendspiele bei KO+120min ja, KO+300min nein. Digest zeigt Iran-NZ als "🏁 Beendet 2–2" live verifiziert. Nebenbei Bug gefixt: Gruppen-Label "GG"→"G".
+- **Beschreibung:** `src/scheduler/matchResult.ts` — alle 3 Min gestrige+heutige Spiele abrufen, neue FINISHED-Spiele posten. Altersgrenze 240min (Restart-Schutz). Ergebnis für ALLE Spiele (Nacht-Sperre am 2026-06-17 wieder entfernt).
+- **Akzeptanzkriterium:** Ergebnis-Embed kurz nach Spielende
+- **Prüfmethode:** Reines Prädikat `isResultDue` + Live-Betrieb
+- **Evidenz:** 2026-06-16 — `isResultDue`: FINISHED bei KO+120min ja, KO+300min nein (Altersgrenze); TIMED nie. France 3-1 Senegal live gepostet. Gruppen-Label-Bug "GG"→"G" gefixt. (2026-06-17: Nacht-Sperre entfernt, postet jetzt auch nachts.)
 
 ### [009] Sportschau Scraper + Embed
 - **Status:** ⚪ Offen

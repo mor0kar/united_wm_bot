@@ -20,7 +20,6 @@ import { getVenue } from "../api/worldcup26";
 import { postEmbeds } from "../discord/webhook";
 import { buildReminderEmbed } from "../embeds/reminderEmbed";
 import { parseUtc, TIMEZONE } from "../utils/time";
-import { isNightKickoff } from "./nightWindow";
 import { recordEvent } from "../status";
 import { logger } from "../utils/logger";
 
@@ -39,8 +38,6 @@ export function minutesUntilKickoff(match: Match, now: number = Date.now()): num
 /** True, wenn jetzt der Reminder für dieses Spiel fällig ist. */
 export function isReminderDue(match: Match, now: number = Date.now()): boolean {
   if (match.status !== "SCHEDULED" && match.status !== "TIMED") return false;
-  // Nacht-/Frühmorgen-Anpfiffe (ab Mitternacht MESZ) bekommen keinen Reminder.
-  if (isNightKickoff(match)) return false;
   const remaining = minutesUntilKickoff(match, now);
   return (
     remaining > REMINDER_LEAD_MIN - REMINDER_WINDOW_MIN &&

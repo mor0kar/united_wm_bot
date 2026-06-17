@@ -93,11 +93,9 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
   Result `*/3 * * * *`, alle mit `timezone: 'Europe/Berlin'`. Zustand wird pro Tick aus der API
   abgeleitet → übersteht Restarts (löst das node-cron-Restart-Risiko). Reine Prädikate
   `isReminderDue` / `isResultDue` in den jeweiligen Modulen.
-- **Nacht-Sperre (Reminder UND Ergebnis):** Spiele mit Anpfiff vor 12:00 MESZ
-  (Nacht-/Frühmorgen-Spiele ab Mitternacht, z.B. 00:00/03:00 MESZ) posten NICHTS in Echtzeit —
-  weder 30-Min-Reminder noch Ergebnis-Post. Stattdessen erscheinen ihre Endstände im
-  Morgen-Digest (08:30 MESZ, gleicher MESZ-Kalendertag). Geteilte Regel:
-  `isNightKickoff()` + `NIGHT_KICKOFF_BEFORE_HOUR` in `src/scheduler/nightWindow.ts`.
+- **KEINE Nacht-Sperre mehr** (entfernt 2026-06-17 auf Wunsch): Reminder UND Ergebnis
+  werden für ALLE Spiele gepostet, auch nachts (00:00/03:00 MESZ). `nightWindow.ts` und
+  `berlinHour()` wurden entfernt. (War vorher: Spiele vor 12:00 MESZ posten nichts in Echtzeit.)
 - **Digest zeigt Resultate:** beendete Spiele erscheinen im Digest mit Endstand
   (🏁 Beendet), laufende mit 🔴 Läuft, anstehende mit Anstoßzeit.
 - **TESTEN NIE im echten Channel:** Test-Skripte/Posts immer mit `BOT_MODE=test` ausführen.
