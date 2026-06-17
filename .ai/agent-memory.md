@@ -115,6 +115,16 @@ Langlebige, verifizierte Projekt-Fakten die über Sessions erhalten bleiben.
   (`replace(/^GROUP[_\s]?/, "")`), NICHT alle Nicht-A-L-Zeichen entfernen (sonst "GG").
 - **Digest splittet bei >25 Spielen** in mehrere Embeds (Discord-Limit: 25 Felder/Embed).
   `buildDigestEmbed` liefert daher `EmbedBuilder[]`.
+- **Startup-Priming gegen Repost-Spam** (2026-06-17): Dedup ist nur In-Memory → ein
+  (Neu-)Start/Redeploy postete laufende/vergangene Events erneut (3x gesehen, davon 2 ohne
+  Stadion = frische Instanzen mit kaltem Venue-Index). Fix: `primeStartupState()` in
+  scheduler/index.ts belegt VOR Cron-Start die Sets vor (`primeReminded`/`primePosted`) —
+  Reminder für Anpfiff ≤31 Min markiert, beendete Spiele als gepostet. Nur NEU eintretende
+  Events werden gepostet. Plus Graceful Shutdown (SIGTERM/SIGINT → process.exit) in index.ts,
+  damit alte Instanzen beim Redeploy sterben.
+- **WICHTIG (Railway):** Echte Repost-Vermeidung erfordert GENAU EINE Instanz. Bei mehreren
+  Replicas/Services/Zombie-Deployments postet jede Instanz unabhängig (In-Memory-Dedup hilft
+  nur prozessintern). Railway: `replicas = 1`, nur ein Service, alte Deployments „Removed".
 - **Multi-Agent-Cleanup 2026-06-17:** toter Code entfernt (getStandings/getMatchById/Standings-Typen,
   Match.venue, matchEmbed.ts, postMessage, cheerio-Dependency). Status-Seite gehärtet
   (XSS-Escaping, timing-safe Token, Query-String-Pfad). README.md angelegt.

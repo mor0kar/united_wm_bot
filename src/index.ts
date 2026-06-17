@@ -14,13 +14,22 @@
 
 import "dotenv/config";
 import { config } from "./config";
-import { startScheduler } from "./scheduler";
+import { primeStartupState, startScheduler } from "./scheduler";
 import { startStatusServer } from "./health";
 import { warmVenueIndex } from "./api/worldcup26";
 import { recordEvent } from "./status";
 import { logger } from "./utils/logger";
 
-function main(): void {
+// Graceful Shutdown: bei Redeploy/Stop sauber beenden, damit keine alte
+// Instanz weiterläuft und parallel zur neuen postet (Doppel-Posts).
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.on(signal, () => {
+    logger.info(`${signal} empfangen — Bot fährt herunter.`);
+    process.exit(0);
+  });
+}
+
+async function main(): Promise<void> {
   logger.info(`WM Bot 2026 startet … (Modus: ${config.mode.toUpperCase()})`);
 
   // Status-Server zuerst, damit der Port (Railway) sofort offen ist.
@@ -33,10 +42,17 @@ function main(): void {
   // Bewusst KEINE "Ich bin bereit"-Nachricht in Discord — Start ist in den
   // Railway-Logs und auf der Status-Seite (Event "start") sichtbar.
 
+  // Dedupe-Sets vorbelegen, BEVOR die Crons feuern können → ein (Neu-)Start
+  // postet keine bereits laufenden/vergangenen Reminder/Ergebnisse erneut.
+  await primeStartupState();
+
   // Cron-Jobs starten — sie halten den Prozess am Leben.
   startScheduler();
 
   logger.info("WM Bot 2026 läuft.");
 }
 
-main();
+main().catch((error: unknown) => {
+  logger.error("Fataler Fehler beim Start", error);
+  process.exit(1);
+});

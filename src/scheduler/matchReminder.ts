@@ -42,6 +42,23 @@ export function minutesUntilKickoff(match: Match, now: number = Date.now()): num
   return (parseUtc(match.utcDate).getTime() - now) / 60_000;
 }
 
+/**
+ * Beim Start: Spiele, deren Reminder-Fenster schon offen/vorbei ist (Anpfiff
+ * in <= LEAD+1 Min oder bereits gestartet), als "erinnert" markieren. So feuert
+ * ein Neustart/Redeploy KEINEN Reminder für ein gerade anstehendes Spiel nach
+ * (verhindert Doppel-Posts durch frisch gestartete Instanzen).
+ */
+export function primeReminded(matches: Match[], now: number = Date.now()): number {
+  let count = 0;
+  for (const m of matches) {
+    if (minutesUntilKickoff(m, now) <= REMINDER_LEAD_MIN + 1) {
+      reminded.add(m.id);
+      count++;
+    }
+  }
+  return count;
+}
+
 /** True, wenn jetzt der Reminder für dieses Spiel fällig ist. */
 export function isReminderDue(match: Match, now: number = Date.now()): boolean {
   if (match.status !== "SCHEDULED" && match.status !== "TIMED") return false;

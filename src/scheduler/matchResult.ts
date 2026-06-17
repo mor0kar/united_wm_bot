@@ -31,6 +31,22 @@ export const RESULT_MAX_AGE_MIN = 240;
 
 const posted = new Set<number>();
 
+/**
+ * Beim Start: bereits beendete Spiele als "gepostet" markieren. So postet ein
+ * Neustart/Redeploy KEINE alten Ergebnisse erneut (verhindert Doppel-Posts
+ * durch frisch gestartete Instanzen).
+ */
+export function primePosted(matches: Match[]): number {
+  let count = 0;
+  for (const m of matches) {
+    if (m.status === "FINISHED") {
+      posted.add(m.id);
+      count++;
+    }
+  }
+  return count;
+}
+
 /** Minuten seit Anpfiff. */
 function minutesSinceKickoff(match: Match, now: number): number {
   return (now - parseUtc(match.utcDate).getTime()) / 60_000;
