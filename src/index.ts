@@ -14,14 +14,13 @@
 
 import "dotenv/config";
 import { config } from "./config";
-import { postMessage } from "./discord/webhook";
 import { startScheduler } from "./scheduler";
 import { startStatusServer } from "./health";
 import { warmVenueIndex } from "./api/worldcup26";
 import { recordEvent } from "./status";
 import { logger } from "./utils/logger";
 
-async function main(): Promise<void> {
+function main(): void {
   logger.info(`WM Bot 2026 startet … (Modus: ${config.mode.toUpperCase()})`);
 
   // Status-Server zuerst, damit der Port (Railway) sofort offen ist.
@@ -31,13 +30,8 @@ async function main(): Promise<void> {
   // Venue-Index (worldcup26.ir) vorwärmen, damit Stadien beim Digest bereitstehen.
   warmVenueIndex();
 
-  try {
-    await postMessage("Ich bin bereit 🏆");
-    logger.info("Bereitschaftsnachricht via Webhook gepostet");
-  } catch {
-    // Fehler wurde bereits in webhook.ts geloggt; Start nicht abbrechen.
-    logger.warn("Bereitschaftsnachricht konnte nicht gesendet werden");
-  }
+  // Bewusst KEINE "Ich bin bereit"-Nachricht in Discord — Start ist in den
+  // Railway-Logs und auf der Status-Seite (Event "start") sichtbar.
 
   // Cron-Jobs starten — sie halten den Prozess am Leben.
   startScheduler();
@@ -45,4 +39,4 @@ async function main(): Promise<void> {
   logger.info("WM Bot 2026 läuft.");
 }
 
-void main();
+main();
