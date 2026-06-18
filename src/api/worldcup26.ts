@@ -91,6 +91,11 @@ const TEAM_ALIASES: Record<string, string> = {
   "united states": "usa",
   "cape verde": "cabo verde",
   iran: "ir iran",
+  // football-data: "Czechia" | worldcup26: "Czech Republic"
+  czechia: "czech republic",
+  // football-data: "Bosnia-Herzegovina" (Bindestrich entfällt beim Normalisieren
+  // -> "bosniaherzegovina") | worldcup26: "Bosnia and Herzegovina"
+  bosniaherzegovina: "bosnia and herzegovina",
   // football-data: "Congo DR" | worldcup26: "Democratic Republic of the Congo"
   "congo dr": "congo",
   "dr congo": "congo",
