@@ -12,7 +12,7 @@ import {
   getMatchesBetween,
   type Match,
 } from "../api/footballData";
-import { getVenue } from "../api/worldcup26";
+import { getMatchGoals, getVenue } from "../api/worldcup26";
 import { postEmbeds } from "../discord/webhook";
 import { buildResultEmbed } from "../embeds/resultEmbed";
 import {
@@ -73,8 +73,11 @@ export async function checkResults(): Promise<void> {
       if (!isResultDue(match, now)) continue;
 
       posted.add(match.id);
-      const venue = await getVenue(match.homeTeam.name, match.awayTeam.name);
-      await postEmbeds([buildResultEmbed(match, venue)]);
+      const [venue, goals] = await Promise.all([
+        getVenue(match.homeTeam.name, match.awayTeam.name),
+        getMatchGoals(match.homeTeam.name, match.awayTeam.name),
+      ]);
+      await postEmbeds([buildResultEmbed(match, venue, goals)]);
       const line = `${match.homeTeam.name} ${match.score.fullTime.home}-${match.score.fullTime.away} ${match.awayTeam.name}`;
       recordEvent("result", line);
       logger.info(`Ergebnis gepostet: ${line}`);

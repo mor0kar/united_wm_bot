@@ -32,6 +32,10 @@ interface RawGame {
   stadium_id: string;
   group: string;
   matchday: string;
+  // Torschützen als roher Postgres-Array-String, z.B. {"K. Mbappé 14'","..."}
+  // (kann auch "null" oder leer sein). Karten liefert worldcup26.ir NICHT.
+  home_scorers?: string;
+  away_scorers?: string;
 }
 
 interface StadiumsResponse {
@@ -46,6 +50,18 @@ interface GamesResponse {
 export interface Venue {
   stadium: string;
   city: string;
+}
+
+/** Ein Tor: Schütze + Minute (z.B. "14'" oder "90+4'"). */
+export interface Goal {
+  scorer: string;
+  minute: string;
+}
+
+/** Torschützen eines Spiels, getrennt nach Heim/Auswärts. */
+export interface MatchGoals {
+  home: Goal[];
+  away: Goal[];
 }
 
 // --- Cache (Stadien/Spiele sind quasi statisch -> lange TTL) ---
@@ -214,4 +230,88 @@ export async function getVenue(
   const index = await getIndex();
   if (!index) return null;
   return index.get(pairKey(homeTeam, awayTeam)) ?? null;
+}
+
+// --- Torschützen ---
+// Anders als Stadien ändern sich Torschützen während/nach dem Spiel. Deshalb
+// KEIN langer Venue-Index, sondern ein eigener kurzlebiger games-Cache: ein
+// gerade beendetes Spiel hat seine Schützen so nach spätestens TTL parat.
+
+const GAMES_TTL_MS = 2 * 60 * 1000; // 2 Min — frisch genug nach Abpfiff
+let gamesCache: { at: number; games: RawGame[] } | null = null;
+
+async function getGamesCached(): Promise<RawGame[]> {
+  if (gamesCache && Date.now() - gamesCache.at < GAMES_TTL_MS) {
+    return gamesCache.games;
+  }
+  const games = await getGames();
+  gamesCache = { at: Date.now(), games };
+  return games;
+}
+
+/**
+ * Parst das rohe Torschützen-Feld von worldcup26.ir in einzelne Tore.
+ *
+ * Format ist ein Postgres-Array-String, der mit geraden ODER typografischen
+ * Anführungszeichen geliefert wird, z.B.:
+ *   {"K. Mbappé 14'","K. Mbappé 54'"}
+ *   {“J. Quiñones 9'”,”R. Jiménez 67'”}
+ * "null"/leer -> keine Tore.
+ */
+export function parseScorers(raw: string | null | undefined): Goal[] {
+  if (!raw) return [];
+  const s = String(raw).trim();
+  if (s === "" || s.toLowerCase() === "null" || s === "{}") return [];
+
+  // Jeden in Anführungszeichen (gerade " oder typografisch “ ” ) gefassten
+  // Eintrag herausziehen — robust gegen Kommata zwischen den Einträgen.
+  const quoted = s.match(/[“"”]([^“"”]+)[“"”]/g) ?? [];
+  const goals: Goal[] = [];
+  for (const q of quoted) {
+    const text = q.replace(/[“"”]/g, "").trim();
+    if (!text) continue;
+    // Minute am Ende abtrennen: "Name 14'" / "Name 90+4'"
+    const m = text.match(/^(.*?)\s+(\d+(?:\+\d+)?')$/);
+    if (m) goals.push({ scorer: m[1].trim(), minute: m[2] });
+    else goals.push({ scorer: text, minute: "" });
+  }
+  return goals;
+}
+
+/**
+ * Liefert die Torschützen eines Spiels (Heim/Auswärts in der Reihenfolge der
+ * übergebenen Teams), oder `null` wenn nicht auffindbar. Blockiert nie einen
+ * Post — Anreicherung ist optional. Karten gibt es bei worldcup26.ir nicht.
+ */
+export async function getMatchGoals(
+  homeTeam: string,
+  awayTeam: string,
+): Promise<MatchGoals | null> {
+  let games: RawGame[];
+  try {
+    games = await getGamesCached();
+  } catch {
+    return null; // Fehler bereits in httpGet geloggt
+  }
+
+  const wantHome = normalizeTeam(homeTeam);
+  const wantAway = normalizeTeam(awayTeam);
+  for (const g of games) {
+    const gh = normalizeTeam(g.home_team_name_en);
+    const ga = normalizeTeam(g.away_team_name_en);
+    if (gh === wantHome && ga === wantAway) {
+      return {
+        home: parseScorers(g.home_scorers),
+        away: parseScorers(g.away_scorers),
+      };
+    }
+    // Heim/Auswärts bei worldcup26 vertauscht -> Schützen entsprechend drehen.
+    if (gh === wantAway && ga === wantHome) {
+      return {
+        home: parseScorers(g.away_scorers),
+        away: parseScorers(g.home_scorers),
+      };
+    }
+  }
+  return null;
 }
